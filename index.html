@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="description" content="完全離線的函數繪圖工具，支援一般函數、參數式、隱函數、草稿與歷史復原。">
+<title>函數畫布 · 離線繪圖工作室</title>
+<style>
+:root{--bg:#f6f7fb;--panel:#fff;--text:#22263a;--muted:#777c90;--border:#e5e7ef;--accent:#6654d9;--accent-soft:#efecff;--grid:#eceef5;--axis:#8a90a5;--danger:#c33c50;--shadow:0 12px 48px #22263a18;--canvas:#fff;--radius:14px;font-family:Inter,"Segoe UI","Noto Sans TC",system-ui,sans-serif;font-size:14px;color-scheme:light}
+:root[data-theme=dark]{--bg:#171924;--panel:#202330;--text:#eef0f7;--muted:#a1a7bb;--border:#35394c;--accent:#b0a2ff;--accent-soft:#352e55;--grid:#2d3143;--axis:#858ca8;--danger:#ff8a9b;--shadow:0 12px 48px #0005;--canvas:#1b1e2b;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);height:100dvh;overflow:hidden}button,input,select{font:inherit}button{cursor:pointer}button,input,select{color:inherit}button{border:1px solid var(--border);border-radius:9px;background:var(--panel);min-height:34px;padding:6px 10px;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,border-color .15s}button:hover{background:var(--accent-soft);border-color:var(--accent)}button:disabled{opacity:.38;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}button svg{width:17px;height:17px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.icon-button{width:34px;padding:6px}.primary{background:var(--accent);color:var(--panel);border-color:var(--accent);font-weight:600}.primary:hover{filter:brightness(.95);background:var(--accent)}[data-theme=dark] .primary{color:#181522}.quiet{background:transparent;border-color:transparent}.small{font-size:12px;min-height:28px;padding:4px 7px}.muted{color:var(--muted)}
+.app-header{height:68px;padding:0 23px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--panel);gap:12px}.brand{display:flex;align-items:center;gap:11px}.brand-symbol{width:35px;height:35px;background:var(--accent);color:#fff;border-radius:11px;display:grid;place-items:center;font-family:Georgia,serif;font-size:28px;line-height:1}.brand h1{font-size:17px;letter-spacing:.04em;margin:0;font-weight:700}.brand p{margin:2px 0 0;font-size:10px;letter-spacing:.18em;color:var(--muted)}.offline{margin-left:14px;border:1px solid var(--border);color:var(--muted);padding:5px 9px;border-radius:20px;font-size:11px;display:flex;gap:5px;align-items:center}.offline:before{content:"";width:6px;height:6px;border-radius:50%;background:#32a488}.header-actions{display:flex;gap:6px;align-items:center}.separator{height:22px;width:1px;background:var(--border);margin:0 5px}.workspace{height:calc(100dvh - 68px);display:flex;min-height:0}.sidebar{width:364px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0;z-index:2}.sidebar-top{padding:23px 20px 15px}.eyebrow{font-size:10px;letter-spacing:.16em;color:var(--muted);font-weight:650}.list-title{display:flex;align-items:center;justify-content:space-between;margin:9px 0 15px}.list-title h2{font-size:18px;margin:0}.count{font-size:11px;background:var(--bg);color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:2px 6px;margin-left:5px}.sidebar-tools{display:flex;gap:8px}.sidebar-tools .primary{flex:1}.list-description{font-size:11px;color:var(--muted);line-height:1.6;margin:12px 0 0}.function-list{overflow-y:auto;overflow-x:hidden;padding:0 13px 20px;flex:1}.function-card{border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin:0 0 10px;position:relative;background:var(--panel);border-left:3px solid var(--row-color)}.function-card.selected{box-shadow:0 0 0 1px var(--accent);border-color:var(--accent);border-left-color:var(--row-color)}.function-card.hidden-curve .fn-name{opacity:.5}.row-head{display:flex;align-items:center;gap:6px;margin-bottom:10px}.fn-name{font-family:Georgia,serif;font-weight:bold;font-size:15px;color:var(--row-color);margin-right:auto}.type-select{font-size:11px;padding:4px 5px;background:var(--bg);border:1px solid var(--border);border-radius:6px;max-width:115px}.color-input{width:24px;height:24px;border:0;background:none;padding:1px;cursor:pointer}.color-input::-webkit-color-swatch-wrapper{padding:1px}.color-input::-webkit-color-swatch{border:none;border-radius:50%}.row-head .icon-button{width:26px;min-height:26px;padding:3px}.row-actions{display:flex;gap:4px;align-items:center;margin:8px 0 0}.row-actions .save{margin-left:auto}.status-chip{font-size:10px;color:var(--muted);max-width:94px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.status-chip.dirty{color:var(--accent)}.expr-field{display:flex;align-items:baseline;gap:7px;margin:6px 0}.expr-prefix{font:italic 14px Georgia,serif;min-width:29px;color:var(--muted)}.math-input{width:100%;min-width:0;font-family:"Cascadia Code",Consolas,monospace;font-size:14px;line-height:1.6;padding:8px;border:1px solid var(--border);border-radius:7px;background:var(--bg);outline:none}.math-input:focus{background:var(--panel);border-color:var(--accent)}.range-fields{display:flex;align-items:center;gap:6px;margin:8px 0 0;font-size:11px;color:var(--muted)}.range-fields input{min-width:0;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:5px 6px;font:12px Consolas,monospace}.row-error{font-size:11px;color:var(--danger);line-height:1.5;white-space:pre-wrap;margin:8px 0 0}.row-note{font-size:10px;color:var(--muted);margin:6px 0 0}.style-row{display:flex;gap:6px;margin-top:9px;align-items:center;font-size:11px}.style-row select{background:var(--bg);border:1px solid var(--border);border-radius:5px;min-width:0;padding:4px}.row-menu{position:relative}.row-menu summary{list-style:none;cursor:pointer;width:25px;text-align:center;line-height:25px;border-radius:5px}.row-menu summary::-webkit-details-marker{display:none}.menu-box{position:absolute;right:0;top:30px;z-index:20;min-width:132px;padding:5px;background:var(--panel);border:1px solid var(--border);box-shadow:var(--shadow);border-radius:9px}.menu-box button{width:100%;justify-content:flex-start;border:0;font-size:12px}.danger{color:var(--danger)}.sidebar-footer{padding:12px 19px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:6px}.save-indicator{display:inline-flex;gap:5px;align-items:center}.save-dot{width:5px;height:5px;background:#32a488;border-radius:50%}.graph-area{flex:1;min-width:0;position:relative;display:flex;flex-direction:column;background:var(--canvas)}.graph-toolbar{position:absolute;left:22px;top:20px;z-index:1;display:flex;gap:6px;align-items:center}.graph-caption{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--muted);font-size:11px;box-shadow:0 2px 8px #00000004}.plot-holder{position:relative;flex:1;min-height:0;overflow:hidden}canvas{display:block;width:100%;height:100%;touch-action:none;outline:none;cursor:crosshair}canvas:active{cursor:grabbing}.zoom-controls{position:absolute;right:20px;top:20px;display:flex;flex-direction:column;gap:5px;z-index:1;box-shadow:var(--shadow);border-radius:10px;padding:4px;background:var(--panel)}.zoom-controls button{border:0;width:32px;min-height:32px;font-size:20px}.zoom-controls hr{border:0;border-top:1px solid var(--border);margin:1px 4px}.graph-bottom{height:35px;border-top:1px solid var(--border);background:var(--panel);display:flex;align-items:center;justify-content:space-between;padding:0 17px;font-size:10px;color:var(--muted);gap:12px}.graph-bottom>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.legend{position:absolute;left:22px;bottom:18px;z-index:1;display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100% - 42px);pointer-events:none}.legend button{pointer-events:auto;font-size:11px;min-height:28px;max-width:210px;box-shadow:0 2px 8px #00000005;gap:6px}.legend button span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.legend .line{width:15px;height:2px;flex-shrink:0}.coordinate{position:absolute;top:64px;left:22px;padding:6px 9px;background:var(--panel);border:1px solid var(--border);border-radius:7px;font:11px Consolas,monospace;pointer-events:none;z-index:1;max-width:calc(100% - 85px);overflow:hidden;white-space:nowrap}.coordinate:empty{display:none}.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--panel);border-radius:9px;box-shadow:var(--shadow);padding:10px 16px;font-size:12px;z-index:100;max-width:90vw;text-align:center}.toast:empty{display:none}.empty-state{padding:40px 20px;color:var(--muted);text-align:center;font-size:13px;line-height:1.9}.mobile-only{display:none}
+dialog{padding:0;border:1px solid var(--border);border-radius:18px;background:var(--panel);color:var(--text);box-shadow:var(--shadow);width:min(580px,calc(100vw - 28px));max-height:calc(100dvh - 48px)}dialog::backdrop{background:#14182a66;backdrop-filter:blur(3px)}.dialog-head{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}.dialog-head h2{font-size:18px;margin:0}.dialog-body{padding:20px 24px;overflow-y:auto;max-height:calc(100dvh - 200px)}.dialog-foot{padding:14px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:flex-end;gap:8px}.setting-section{padding:0 0 19px;margin:0 0 19px;border-bottom:1px solid var(--border)}.setting-section:last-child{border:0;margin:0;padding:0}.setting-section h3{font-size:12px;letter-spacing:.06em;margin:0 0 13px;color:var(--muted)}.setting-line{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:10px 0}.setting-line select,.setting-line input[type=number]{background:var(--bg);border:1px solid var(--border);padding:7px 9px;border-radius:7px;max-width:150px}.setting-line input[type=checkbox]{accent-color:var(--accent);width:17px;height:17px}.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.settings-grid label{font-size:12px;display:flex;gap:8px;align-items:center}.settings-grid input{width:100%;min-width:0;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px}.help-content{font-size:13px;line-height:1.8}.help-content h3{font-size:14px;margin:18px 0 7px}.help-content h3:first-child{margin-top:0}.help-content p{margin:7px 0}.help-content code{background:var(--bg);padding:2px 5px;border-radius:4px;font-size:12px}.help-content table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}.help-content td{border-bottom:1px solid var(--border);padding:7px 4px;vertical-align:top}.help-content td:first-child{width:35%;color:var(--muted)}.sample-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.sample-grid button{display:block;text-align:left;padding:12px;font-size:13px}.sample-grid small{display:block;margin-top:5px;color:var(--muted);font:11px Consolas,monospace}.notice{font-size:11px;color:var(--muted);line-height:1.7}.view-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.view-fields label{display:flex;flex-direction:column;gap:6px;font-size:12px}.view-fields input{width:100%;background:var(--bg);border:1px solid var(--border);padding:9px;border-radius:7px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(min-width:1500px){.sidebar{width:392px}.sidebar-top{padding-top:30px}.app-header{padding:0 28px}}
+@media(max-width:760px){.app-header{height:58px;padding:0 12px}.brand{gap:8px}.brand-symbol{width:30px;height:30px;font-size:24px;border-radius:9px}.brand h1{font-size:15px}.brand p{font-size:8px}.offline{display:none}.header-actions{gap:2px}.header-actions .text-label{display:none}.separator{margin:0 2px}.header-actions button{padding:6px;width:32px}.workspace{height:calc(100dvh - 58px);flex-direction:column-reverse}.sidebar{width:100%;height:44%;border:0;border-top:1px solid var(--border)}.sidebar-top{padding:12px 15px 10px}.eyebrow,.list-description{display:none}.list-title{margin:0 0 10px}.list-title h2{font-size:15px}.sidebar-tools{position:absolute;right:15px;margin-top:-36px}.sidebar-tools button{min-height:29px;font-size:12px}.sidebar-tools .primary{padding:4px 9px}.function-list{padding:0 12px 8px}.sidebar-footer{padding:6px 15px;font-size:9px}.function-card{padding:10px;margin-bottom:8px}.graph-area{min-height:150px}.graph-toolbar{left:12px;top:12px}.graph-caption{font-size:10px;padding:6px 8px}.zoom-controls{right:12px;top:12px}.zoom-controls button{width:28px;min-height:28px}.graph-bottom{height:27px;padding:0 10px;font-size:9px}.graph-bottom .desktop-hint{display:none}.legend{left:12px;bottom:10px;max-width:calc(100% - 24px);gap:4px}.legend button{font-size:10px;min-height:24px;padding:4px 6px;max-width:135px}.coordinate{left:12px;top:51px;font-size:10px}.mobile-only{display:inline-flex}.workspace.panel-hidden .sidebar{display:none}.workspace.panel-hidden .graph-area{height:100%}.dialog-body{padding:17px}.dialog-head{padding:15px 17px}.dialog-foot{padding:12px 17px}.toast{bottom:12px}.sample-grid{grid-template-columns:1fr}.style-row{font-size:10px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+/* SRS v7.5 unified input and submission controls */
+.quick-tools{display:flex;gap:5px;overflow-x:auto;padding:0 16px 12px;flex-shrink:0}.quick-tools button{min-width:33px;font-size:12px;padding:5px 8px;white-space:nowrap}.draw-bar{border-top:1px solid var(--border);padding:12px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.draw-bar>.primary{flex:1;min-height:40px}.batch-progress{width:100%;display:flex;gap:8px;align-items:center;font-size:11px;color:var(--muted)}.batch-progress[hidden]{display:none}.batch-progress progress{flex:1;height:6px;accent-color:var(--accent)}.name-input{width:100%;min-width:0;border:1px solid transparent;border-radius:5px;background:transparent;font-weight:650;font-size:13px;padding:4px;color:var(--row-color)}.name-input:focus{border-color:var(--accent)}.fn-name{flex-shrink:0;margin:0;cursor:grab}.row-head{gap:5px}.type-badge{font-size:10px;color:var(--muted);white-space:nowrap}.math-input{resize:vertical;min-height:66px;max-height:220px;white-space:pre;overflow:auto;font-size:13px}.submitted-details{font-size:11px;color:var(--muted);margin-top:8px}.submitted-details summary{cursor:pointer}.submitted-details pre{white-space:pre-wrap;word-break:break-all;font:11px Consolas,monospace;padding:8px;background:var(--bg);border-radius:6px;margin:6px 0 0}.row-note{line-height:1.6}.row-status{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:10px;margin-top:7px;color:var(--muted)}.dirty-state{color:var(--accent);font-weight:600}.error-state{color:var(--danger)}.legend{position:static;padding:8px 15px;min-height:43px;max-height:115px;overflow:auto;max-width:none;flex-shrink:0;background:var(--panel);border-top:1px solid var(--border);pointer-events:auto;align-content:flex-start}.legend:empty{display:none}.legend button{max-width:240px;min-height:30px;box-shadow:none}.legend .invisible{opacity:.55}.legend .legend-state{font-size:9px;margin-left:3px}.legend .line{height:3px}.graph-bottom{flex-shrink:0}.sidebar-top{padding-bottom:10px}.list-description{margin-top:8px}.function-list{padding-bottom:8px}.sidebar{width:380px}.app-header .version{font-size:10px;color:var(--muted);margin-left:9px}.batch-input{width:100%;min-height:220px;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:12px;font:13px/1.8 Consolas,monospace;color:var(--text);resize:vertical}.row-actions{margin-top:7px}.function-card .row-actions button{min-height:30px}.graph-caption{max-width:220px}.mode-control{display:flex;gap:8px;margin-bottom:14px;align-items:center}.mode-control select{padding:7px;background:var(--bg);border:1px solid var(--border);border-radius:6px}.hidden-field{display:none}.setting-line input[type=range]{width:130px;accent-color:var(--accent)}
+@media(max-width:760px){.workspace{flex-direction:column}.sidebar{width:100%;height:46%;flex-shrink:0}.sidebar-top{padding:10px 12px 8px}.sidebar-tools{right:12px}.sidebar-footer{display:none}.draw-bar{padding:7px 12px;gap:5px}.draw-bar>.primary{min-height:35px}.quick-tools{padding:0 12px 8px;gap:5px}.quick-tools button{min-height:34px;min-width:34px}.sidebar .function-list{min-height:85px}.graph-area{flex:1;min-height:190px}.legend{padding:5px 10px;min-height:34px;max-height:66px}.legend button{min-height:30px;max-width:165px}.coordinate{max-width:calc(100% - 75px)}.graph-caption{display:none}.app-header .version{display:none}.workspace.panel-hidden .graph-area{flex:1}.workspace.panel-hidden .sidebar{display:none}.function-card{padding:9px}.row-head button{min-height:32px;min-width:30px}.math-input{min-height:60px}.graph-toolbar{gap:5px}.name-input{font-size:13px}.batch-progress{font-size:10px}.settings-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:760px) and (max-height:500px){.sidebar{height:45%;min-height:190px}.workspace{height:auto;min-height:calc(100dvh - 58px)}body{overflow:auto;height:auto}.graph-area{height:360px;flex:none}.sidebar .function-list{max-height:180px}.sidebar-top{padding-top:8px}}
+[hidden]{display:none!important}.name-input{flex:1;width:0}.color-input,.row-head .icon-button{flex-shrink:0}.row-head [data-action=delete]{white-space:nowrap;flex-shrink:0}
+</style>
+</head>
+<body>
+<header class="app-header"><div class="brand"><div class="brand-symbol" aria-hidden="true">ƒ</div><div><h1>函數畫布</h1><p>OFFLINE GRAPH STUDIO</p></div><span class="offline">完全離線</span></div><nav class="header-actions" aria-label="主要工具"><button id="undoBtn" title="復原 Ctrl / ⌘ + Z" aria-label="復原"></button><button id="redoBtn" title="重做 Ctrl / ⌘ + Shift + Z" aria-label="重做"></button><span class="separator"></span><button id="helpBtn" title="使用說明"><span class="text-label">說明</span></button><button id="settingsBtn" title="設定"><span class="text-label">設定</span></button></nav></header>
+<main class="workspace" id="workspace"><aside class="sidebar" aria-label="函數編輯器"><div class="sidebar-top"><div class="eyebrow">SRS 7.5 · OFFLINE WORKSPACE</div><div class="list-title"><h2>函數清單 <span class="count" id="rowCount">0</span></h2></div><div class="sidebar-tools"><button class="primary" id="addFunction">＋ 新增</button><button id="batchBtn">批次貼上</button><button id="examplesBtn">範例</button></div><p class="list-description">自動辨識一般函數、參數式與隱函數。<br>修改只更新草稿；按「繪製」才會更新曲線。</p></div><div class="quick-tools" id="quickTools" aria-label="數學快捷輸入"></div><div id="functionList" class="function-list"></div><div class="draw-bar"><button class="primary" id="drawBtn">繪製全部函數</button><button id="cancelBtn" hidden>取消繪製</button><div class="batch-progress" id="batchProgress" hidden><progress id="progressBar" max="100" value="0"></progress><span id="progressText">0%</span></div></div><footer class="sidebar-footer"><span class="save-indicator" id="saveState"><i class="save-dot"></i> 已儲存於此瀏覽器</span><span>單檔 · 本機運算</span></footer></aside><section class="graph-area" aria-label="函數圖表"><div class="plot-holder" id="plotHolder"><canvas id="plot" tabindex="0" aria-label="函數繪圖區。拖曳平移、滾輪縮放；方向鍵平移，加減鍵縮放，Home 重設視角。"></canvas><div class="graph-toolbar"><button id="togglePanel" class="mobile-only small" aria-label="顯示或隱藏函數清單">收合清單</button><span class="graph-caption" id="viewBadge">等比例座標 · RAD</span><button id="viewBtn" class="small" title="設定座標範圍">座標範圍</button></div><div class="coordinate" id="coordinate" role="status"></div><div class="zoom-controls" aria-label="縮放工具"><button id="zoomIn" aria-label="放大" title="放大">＋</button><button id="zoomOut" aria-label="縮小" title="縮小">−</button><hr><button id="homeView" aria-label="重設視角" title="重設視角"></button></div></div><div class="legend" id="legend" aria-label="圖例：名稱、顏色及可見性"></div><footer class="graph-bottom"><span id="statusText" role="status">請新增公式，再按「繪製」</span><span class="desktop-hint">拖曳平移 · 滾輪縮放 · 懸停吸附</span><span id="scaleText"></span></footer></section></main>
+<dialog id="settingsDialog" aria-labelledby="settingsTitle"><form id="settingsForm"><div class="dialog-head"><h2 id="settingsTitle">畫布設定</h2><button type="button" class="icon-button quiet" data-close="settingsDialog" aria-label="關閉設定">×</button></div><div class="dialog-body"><section class="setting-section"><h3>外觀與輔助</h3><label class="setting-line">主題<select id="themeSelect" name="theme"><option value="system">跟隨系統</option><option value="light">淺色</option><option value="dark">深色</option></select></label><label class="setting-line">顯示網格<input name="grid" type="checkbox"></label><label class="setting-line">顯示座標軸<input name="axes" type="checkbox"></label><label class="setting-line">顯示刻度數字<input name="labels" type="checkbox"></label><label class="setting-line">十字游標<input name="crosshair" type="checkbox"></label><label class="setting-line">曲線吸附<input name="snap" type="checkbox"></label><label class="setting-line">全域線條粗細 <span><output id="lineWidthValue">2.4</output> px <input name="lineWidth" id="lineWidthInput" type="range" min="1" max="6" step="0.2"></span></label></section><section class="setting-section"><h3>數值取樣</h3><label class="setting-line">取樣品質<select id="qualitySelect" name="quality"><option value="low">流暢</option><option value="medium">標準</option><option value="high">精細</option></select></label><p class="notice">取樣成本依畫面與曲線數量調整，優先保持介面可操作。品質變更只重新取樣已提交的公式。</p></section><p class="notice">公式、草稿、名稱、順序、視圖與設定自動保存於此瀏覽器。重新載入只恢復輸入與設定，必須按「繪製」才能顯示曲線。儲存不可用時仍可繼續操作，但重載後可能無法恢復。</p></div><div class="dialog-foot"><button type="button" data-close="settingsDialog" class="primary">完成</button></div></form></dialog>
+<dialog id="helpDialog" aria-labelledby="helpTitle"><div class="dialog-head"><h2 id="helpTitle">使用說明</h2><button class="icon-button quiet" data-close="helpDialog" aria-label="關閉說明">×</button></div><div class="dialog-body help-content"><h3>在同一輸入區寫公式</h3><table><tr><td>一般函數</td><td><code>sin(x)</code> 或 <code>y=x²</code></td></tr><tr><td>參數式</td><td>在同一欄分兩行輸入：<br><code>x(t)=3*cos(t)</code><br><code>y(t)=2*sin(t)</code><br>預設 t：0 到 2π，可獨立設定。</td></tr><tr><td>隱函數</td><td><code>x²+y²=25</code>，同一項目顯示可偵測的全部分支。</td></tr></table><p>系統自動辨識類型。未帶等號的純表達式一律作 y=f(x)；不支援不等式填色。</p><h3>草稿與繪製</h3><p>輸入、範例與批次貼上只形成草稿。按「繪製全部函數」或 Ctrl／⌘+Enter 才提交。一般 Enter 用來換行。錯誤草稿保留，並保留該項舊曲線及「尚未更新」。展開項目中的「目前已繪製公式」可查看舊版本。</p><p>整批繪製完成後一次發布結果；取消會捨棄這批結果，保留原圖與最新草稿。計算中改名、改色、排序或刪除會立即生效，舊結果不會覆蓋這些操作。</p><h3>數學語法與快捷工具</h3><p>支援 + − * / ^、括號、<code>2x</code>、<code>xsin(x)</code>、<code>(x+1)(x-1)</code>、<code>x²</code>、<code>sin²(x)</code>、π、pi、e。函數必須帶括號，<code>sin x</code> 會顯示錯誤。角度固定為弧度。</p><p><code>log(x)</code> 為底數 10，<code>log(x,b)</code> 為指定底數，<code>ln(x)</code> 為自然對數。底數須大於 0 且不等於 1。次方右結合：<code>2^3^2=512</code>；<code>-x^2=-(x^2)</code>。每欄最多 2048 字元。</p><p>另支援 sqrt、exp、abs、三角與反三角函數等。快捷鍵盤會在目前選取公式的游標處插入；產生的空括號或逗號占位仍須補完才能繪製。</p><h3>批次貼上與重複檢查</h3><p>「批次貼上」每行一公式，忽略空白行，連續 x(t)、y(t) 兩行自動配對。有效與非重複錯誤項目保留，錯誤可再修正；重複項目拒絕並提示。亦可直接將多行公式貼入空白項目的公式欄。</p><p>空白、上標、隱式乘法及省略 y= 等寫法會標準化比較；例如 x²、x^2、y=x^2 視為相同。沒有進行完整代數等價判斷，x+x 與 2x 可各自保留。</p><h3>圖表與歷史</h3><p>電腦拖曳平移、滾輪縮放、懸停吸附；手機單指平移、雙指縮放、點擊吸附。平移縮放預覽與等待精確取樣時暫停吸附，完成後恢復。隱藏曲線不參與吸附。</p><p>圖例位於圖表下方，顯示名稱、顏色與可見性，點擊可切換顯示。清單越下方的曲線越上層，等距時優先吸附上層曲線。拖曳標題或上下按鈕可排序，排序與排序復原不重新取樣。</p><p>繪圖區取得焦點後：方向鍵平移、+／− 縮放、Home 重設。Ctrl／⌘+Z 復原，Ctrl／⌘+Shift+Z 重做；輸入框內使用原生文字復原。歷史只在本次工作階段有效，最多 100 步，亦受記憶體預算限制。</p><h3>數值限制</h3><p>有限取樣可能漏掉極小封閉輪廓、高頻震盪或沒有符號變化的隱函數零點。吸附座標是數值近似，並非解析解。合法但在視窗外的公式會提示「目前沒有可見曲線」；單純未找到曲線不代表公式全域無效。</p><p>本產品不提供圖表或外部檔案匯入匯出、符號推導、複數、不等式填色與完整代數等價判斷。無須網路、伺服器、CDN 或外部套件。</p></div><div class="dialog-foot"><button data-close="helpDialog" class="primary">開始使用</button></div></dialog>
+<dialog id="examplesDialog" aria-labelledby="examplesTitle"><div class="dialog-head"><h2 id="examplesTitle">插入範例草稿</h2><button class="icon-button quiet" data-close="examplesDialog" aria-label="關閉範例">×</button></div><div class="dialog-body"><div class="sample-grid" id="sampleGrid"></div><p class="notice">範例只新增輸入，不會提交其他草稿。按「繪製」才產生曲線。</p></div></dialog>
+<dialog id="batchDialog" aria-labelledby="batchTitle"><div class="dialog-head"><h2 id="batchTitle">批次貼上公式</h2><button class="icon-button quiet" data-close="batchDialog" aria-label="關閉批次貼上">×</button></div><div class="dialog-body"><textarea id="batchInput" class="batch-input" aria-label="每行一公式，參數式分兩行" spellcheck="false" placeholder="sin(x)&#10;x²+y²=25&#10;x(t)=cos(t)&#10;y(t)=sin(t)"></textarea><p class="notice">忽略空白行，連續參數式自動配對。重複拒絕；其他錯誤項目保留供修正。加入後仍須按「繪製」。</p><p id="batchMessage" class="notice" role="status"></p></div><div class="dialog-foot"><button data-close="batchDialog">取消</button><button id="batchInsert" class="primary">加入草稿</button></div></dialog>
+<dialog id="viewDialog" aria-labelledby="viewTitle"><form id="viewForm"><div class="dialog-head"><h2 id="viewTitle">座標範圍</h2><button type="button" class="icon-button quiet" data-close="viewDialog" aria-label="關閉範圍">×</button></div><div class="dialog-body"><label class="mode-control">指定範圍<select id="rangeMode" name="mode"><option value="both">X 與 Y 兩軸</option><option value="x">只指定 X 軸</option><option value="y">只指定 Y 軸</option></select></label><div class="view-fields"><label>x 最小值<input name="xmin" inputmode="decimal" required></label><label>x 最大值<input name="xmax" inputmode="decimal" required></label><label>y 最小值<input name="ymin" inputmode="decimal" required></label><label>y 最大值<input name="ymax" inputmode="decimal" required></label></div><p class="notice">只指定一軸時保留該軸邊界，另一軸依等比例擴展。指定兩軸時完整容納輸入區域，必要時擴展其中一軸。支援數字及 pi 等常數表達式。</p><p id="viewError" class="row-error" role="alert"></p></div><div class="dialog-foot"><button type="button" data-close="viewDialog">取消</button><button type="submit" class="primary">套用範圍</button></div></form></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script>
+/* Offline MathEngine. Expressions are parsed into a bounded syntax tree; no code evaluation. */
+(function (root) {
+  'use strict';
+  const LIMITS = Object.freeze({ characters: 4096, tokens: 1024, nodes: 1024, depth: 64 });
+  class MathParseError extends Error {
+    constructor(message, position, code) {
+      super(message + (Number.isInteger(position) ? '（第 ' + (position + 1) + ' 個字元）' : ''));
+      this.name = 'MathParseError';
+      this.position = position;
+      this.code = code || 'SYNTAX';
+    }
+  }
+  const constants = Object.freeze({ pi: Math.PI, e: Math.E, tau: 2 * Math.PI });
+  const functions = Object.create(null);
+  function fn(names, min, max, run) {
+    names.split(' ').forEach(name => { functions[name] = { min, max, run }; });
+  }
+  ['sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'sinh', 'cosh', 'tanh', 'asinh', 'acosh', 'atanh',
+    'sqrt', 'cbrt', 'abs', 'exp', 'expm1', 'floor', 'ceil', 'round', 'trunc', 'sign'].forEach(name => fn(name, 1, 1, Math[name]));
+  fn('arcsin', 1, 1, Math.asin); fn('arccos', 1, 1, Math.acos); fn('arctan', 1, 1, Math.atan);
+  fn('ln', 1, 1, x => x > 0 ? Math.log(x) : NaN);
+  fn('log', 1, 2, (x, base) => x > 0 && (base === undefined || (base > 0 && base !== 1)) ? (base === undefined ? Math.log10(x) : Math.log(x) / Math.log(base)) : NaN);
+  fn('log10', 1, 1, x => x > 0 ? Math.log10(x) : NaN); fn('log2', 1, 1, x => x > 0 ? Math.log2(x) : NaN);
+  fn('atan2', 2, 2, Math.atan2); fn('pow', 2, 2, Math.pow);
+  fn('min', 2, 16, Math.min); fn('max', 2, 16, Math.max); fn('hypot', 2, 16, Math.hypot);
+  fn('sec', 1, 1, x => 1 / Math.cos(x)); fn('csc', 1, 1, x => 1 / Math.sin(x)); fn('cot', 1, 1, x => 1 / Math.tan(x));
+  fn('sinc', 1, 1, x => x === 0 ? 1 : Math.sin(x) / x);
+  function factorial(n) {
+    if (!Number.isFinite(n) || n < 0 || n > 170 || !Number.isInteger(n)) return NaN;
+    let value = 1; for (let i = 2; i <= n; i++) value *= i; return value;
+  }
+  fn('factorial fact', 1, 1, factorial);
+  Object.freeze(functions);
+  const own = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
+  const reservedNames = new Set(['constructor', 'prototype', '__proto__', 'window', 'document', 'globalthis', 'eval', 'function']);
+  const superscriptDigits = { '⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁻':'-','⁺':'+' };
+  function fail(message, position, code) { throw new MathParseError(message, position, code); }
+  function tokenize(source, variables) {
+    const result = [];
+    const knownNames = Array.from(new Set([...Object.keys(functions), ...Object.keys(constants), ...variables])).sort((a,b) => b.length-a.length);
+    function splitName(id, offset, depth=0) {
+      if (!id) return [];
+      if(depth>=LIMITS.depth)fail('相鄰因子過多，請減少運算式',offset,'BUDGET');
+      for (const name of knownNames) if (id.startsWith(name)) {
+        const rest = splitName(id.slice(name.length), offset + name.length, depth+1);
+        if (rest) return [{ type:'id',value:name,pos:offset }, ...rest];
+      }
+      return null;
+    }
+    const push = token => {
+      result.push(token);
+      if (result.length > LIMITS.tokens) fail('運算式過長，請減少項目', token.pos, 'BUDGET');
+    };
+    for (let i = 0; i < source.length;) {
+      const ch = source[i];
+      if (/\s/.test(ch)) { i++; continue; }
+      if (ch === 'π' || ch === 'τ') { push({ type: 'id', value: ch === 'π' ? 'pi' : 'tau', pos: i++ }); continue; }
+      if (own(superscriptDigits,ch)) {
+        const start=i;let exponent='';
+        while(i<source.length && own(superscriptDigits,source[i])) exponent+=superscriptDigits[source[i++]];
+        if(!/^[+-]?\d+$/.test(exponent)) fail('上標指數格式不正確',start);
+        const value=Number(exponent);if(!Number.isSafeInteger(value))fail('上標指數過大',start,'NUMBER');
+        push({type:'super',value,pos:start});continue;
+      }
+      if (/[0-9.]/.test(ch)) {
+        const match = source.slice(i).match(/^(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/);
+        if (!match) fail('數字格式不正確', i);
+        if (source[i + match[0].length] === '.') fail('數字不能包含兩個小數點', i + match[0].length);
+        if (result.length && result[result.length - 1].type === 'number') fail('數字之間需要運算符號', i);
+        const value = Number(match[0]);
+        if (!Number.isFinite(value)) fail('數字超出可計算範圍', i, 'NUMBER');
+        push({ type: 'number', value, pos: i }); i += match[0].length; continue;
+      }
+      if (/[a-zA-Z_]/.test(ch)) {
+        const match = source.slice(i).match(/^[a-zA-Z_][a-zA-Z_0-9]*/)[0];
+        const id = match.toLowerCase();
+        if (own(functions, id) || own(constants, id) || variables.has(id)) push({ type: 'id', value: id, pos: i });
+        else if (/^[a-zA-Z]+$/.test(match)) {
+          const parts=splitName(id,i);
+          if(!parts)fail('未知名稱「' + match + '」；請使用支援的函數或變數',i,'NAME');
+          parts.forEach(push);
+        } else fail('未知名稱「' + match + '」；請使用支援的函數或變數', i, 'NAME');
+        i += match.length; continue;
+      }
+      const aliases = { '−': '-', '–': '-', '×': '*', '·': '*', '÷': '/' };
+      let op = aliases[ch] || ch;
+      if (source.slice(i, i + 2) === '**') { op = '^'; push({ type: op, value: op, pos: i }); i += 2; continue; }
+      if ('+-*/%^!(),|'.includes(op)) { push({ type: op, value: op, pos: i++ }); continue; }
+      if (ch === '=') fail('此欄位只接受一個運算式，請檢查等號', i);
+      fail('不支援字元「' + ch + '」', i, 'CHARACTER');
+    }
+    // Move function superscripts after their call, then treat every superscript
+    // as a normal power. This makes sin²(x) and sin(x)^2 share the same tree.
+    for(let i=result.length-3;i>=0;i--)if(result[i].type==='id'&&own(functions,result[i].value)&&result[i+1].type==='super'&&result[i+2].type==='('){
+      let depth=0,close=-1;
+      for(let j=i+2;j<result.length;j++){if(result[j].type==='(')depth++;if(result[j].type===')'&&--depth===0){close=j;break;}}
+      if(close<0)fail('函數缺少右括號 )',result[i].pos);
+      const power=result.splice(i+1,1)[0];result.splice(close,0,power);
+    }
+    const expanded=[];
+    for(const token of result){
+      if(token.type!=='super'){expanded.push(token);continue;}
+      expanded.push({type:'^',value:'^',pos:token.pos});
+      if(token.value<0)expanded.push({type:'-',value:'-',pos:token.pos});
+      expanded.push({type:'number',value:Math.abs(token.value),pos:token.pos});
+    }
+    if(expanded.length>LIMITS.tokens)fail('運算式過長，請減少項目',source.length,'BUDGET');
+    expanded.push({ type: 'end', pos: source.length }); return expanded;
+  }
+  function compileExpression(input, allowedVars) {
+    const source = String(input == null ? '' : input).trim();
+    if (!source) fail('請輸入運算式', 0, 'EMPTY');
+    if (source.length > LIMITS.characters) fail('運算式最多 ' + LIMITS.characters + ' 個字元', LIMITS.characters, 'BUDGET');
+    const vars = new Set((allowedVars || ['x']).map(v => String(v).toLowerCase()));
+    if (vars.size > 32 || Array.from(vars).some(v => !/^[a-z][a-z0-9_]*$/.test(v) || reservedNames.has(v) || own(constants, v) || own(functions, v))) fail('變數名稱不合法', null, 'VARIABLES');
+    const tokens = tokenize(source, vars); let index = 0; let nodeCount = 0; let recursion = 0;
+    const used = new Set();
+    const current = () => tokens[index];
+    function make(kind, value, args, pos) {
+      const depth = 1 + Math.max(0, ...(args || []).map(a => a.depth));
+      if (++nodeCount > LIMITS.nodes || depth > LIMITS.depth) fail('運算式巢狀或計算層數過多', pos, 'BUDGET');
+      return { kind, value, args: args || [], depth, pos };
+    }
+    function expect(type, message) {
+      if (current().type !== type) fail(message, current().pos);
+      return tokens[index++];
+    }
+    function expression(minBP, insideAbs) {
+      if (++recursion > LIMITS.depth) fail('括號或次方巢狀過深', current().pos, 'BUDGET');
+      let left; const token = tokens[index++];
+      if (token.type === 'number') left = make('number', token.value, [], token.pos);
+      else if (token.type === '+' || token.type === '-') left = make('unary', token.type, [expression(25, insideAbs)], token.pos);
+      else if (token.type === '(') {
+        left = expression(0, false); expect(')', '缺少右括號 )');
+      } else if (token.type === '|') {
+        left = make('call', 'abs', [expression(0, true)], token.pos); expect('|', '絕對值缺少結束符號 |');
+      } else if (token.type === 'id') {
+        if (own(constants, token.value)) left = make('number', constants[token.value], [], token.pos);
+        else if (own(functions, token.value)) {
+          expect('(', '函數 ' + token.value + ' 後方需要括號，例如 ' + token.value + '(x)');
+          const args = [];
+          if (current().type !== ')') {
+            while (true) {
+              args.push(expression(0, false));
+              if (current().type !== ',') break;
+              index++;
+              if (args.length >= 16) fail('函數引數過多', current().pos, 'ARITY');
+            }
+          }
+          expect(')', '函數缺少右括號 )');
+          const descriptor = functions[token.value];
+          if (args.length < descriptor.min || args.length > descriptor.max) {
+            const count = descriptor.min === descriptor.max ? descriptor.min : descriptor.min + ' 至 ' + descriptor.max;
+            fail(token.value + ' 需要 ' + count + ' 個引數', token.pos, 'ARITY');
+          }
+          left = make('call', token.value, args, token.pos);
+        } else { used.add(token.value); left = make('variable', token.value, [], token.pos); }
+      } else fail(token.type === 'end' ? '運算式尚未完成' : '此處需要數字、變數或括號', token.pos);
+      while (true) {
+        const next = current();
+        if (next.type === '!' && 40 >= minBP) { index++; left = make('call', 'factorial', [left], next.pos); continue; }
+        if (insideAbs && next.type === '|') break;
+        let op = next.type; let bp;
+        let implicit = false;
+        if (op === '+' || op === '-') bp = 10;
+        else if (op === '*' || op === '/' || op === '%') bp = 20;
+        else if (op === '^') bp = 30;
+        else if (op === 'number' || op === 'id' || op === '(' || op === '|') { op = '*'; bp = 20; implicit = true; }
+        else break;
+        if (bp < minBP) break;
+        if (!implicit) index++;
+        // Powers associate to the right. Unary minus binds below powers.
+        const right = expression(op === '^' ? bp : bp + 1, insideAbs);
+        left = make('binary', op, [left, right], next.pos);
+      }
+      recursion--; return left;
+    }
+    const tree = expression(0, false);
+    if (current().type !== 'end') fail(current().type === ')' ? '多餘的右括號 )' : '此處有多餘的符號', current().pos);
+    // Build ordinary, closed-over functions once. These do not compile or execute text.
+    function makeEvaluator(node) {
+      const value = node.value;
+      if (node.kind === 'number') return () => value;
+      if (node.kind === 'variable') return scope => own(scope, value) && typeof scope[value] === 'number' ? scope[value] : NaN;
+      const args = node.args.map(makeEvaluator), a = args[0], b = args[1];
+      if (node.kind === 'unary') return value === '-' ? scope => -a(scope) : scope => a(scope);
+      if (node.kind === 'call') {
+        const run = functions[value].run;
+        if (args.length === 1) return scope => run(a(scope));
+        if (args.length === 2) return scope => run(a(scope), b(scope));
+        return scope => run(...args.map(arg => arg(scope)));
+      }
+      switch (value) {
+        case '+': return scope => a(scope) + b(scope); case '-': return scope => a(scope) - b(scope);
+        case '*': return scope => a(scope) * b(scope); case '/': return scope => a(scope) / b(scope);
+        case '%': return scope => a(scope) % b(scope); case '^': return scope => Math.pow(a(scope), b(scope));
+        default: return () => NaN;
+      }
+    }
+    const evaluate = makeEvaluator(tree), emptyScope = Object.create(null);
+    function canonicalNode(node){
+      if(node.kind==='number')return Object.is(node.value,-0)?'0':String(node.value);
+      if(node.kind==='variable')return node.value;
+      if(node.kind==='unary')return node.value==='+'?canonicalNode(node.args[0]):'(-'+canonicalNode(node.args[0])+')';
+      if(node.kind==='binary')return '('+canonicalNode(node.args[0])+node.value+canonicalNode(node.args[1])+')';
+      return node.value+'('+node.args.map(canonicalNode).join(',')+')';
+    }
+    function validateReal(knownScope){
+      const scope=knownScope||emptyScope;
+      function visit(node){
+        if(node.kind==='number')return {known:true,value:node.value};
+        if(node.kind==='variable')return own(scope,node.value)&&Number.isFinite(scope[node.value])?{known:true,value:scope[node.value]}:{known:false};
+        const args=node.args.map(visit),a=args[0],b=args[1];
+        if(node.kind==='binary'&&['/','%'].includes(node.value)&&b.known&&b.value===0)fail('分母不得恆為 0；此公式沒有有效實數值',node.pos,'REAL_DOMAIN');
+        if(node.kind==='call'){
+          if(['log','log10','log2','ln'].includes(node.value)&&a.known&&a.value<=0)fail('對數真數必須大於 0；此公式沒有有效實數值',node.pos,'REAL_DOMAIN');
+          if(node.value==='log'&&b&&b.known&&(b.value<=0||b.value===1))fail('對數底數必須大於 0 且不等於 1',node.pos,'REAL_DOMAIN');
+          if(node.value==='sqrt'&&a.known&&a.value<0)fail('平方根內不得恆為負數；此公式沒有有效實數值',node.pos,'REAL_DOMAIN');
+        }
+        if(args.every(arg=>arg.known)){
+          const value=makeEvaluator(node)(scope);
+          if(!Number.isFinite(value))fail('此常數運算沒有有效的有限實數值',node.pos,'REAL_DOMAIN');
+          return {known:true,value};
+        }
+        return {known:false};
+      }
+      visit(tree);return true;
+    }
+    validateReal();
+    return Object.freeze({ source, variables: Object.freeze(Array.from(used)), nodeCount,canonical:canonicalNode(tree),validateReal,
+      evaluate(scope) { return evaluate(scope || emptyScope); } });
+  }
+  function compileRow(row, parameterValues) {
+    const params = Object.create(null);
+    Object.entries(parameterValues || { a: 1, b: 1, c: 1 }).forEach(([key, value]) => {
+      const name = key.toLowerCase();
+      if (!/^[a-z][a-z0-9_]*$/.test(name) || reservedNames.has(name) || ['x', 'y', 't'].includes(name) || own(constants, name) || own(functions, name)) fail('參數名稱「' + key + '」不可使用', null, 'VARIABLES');
+      if (typeof value !== 'number' || !Number.isFinite(value)) fail('參數「' + key + '」必須是有限數字', null, 'PARAMETER');
+      params[name] = value;
+    });
+    const names = Object.keys(params);
+    const source = String(row.expr == null ? '' : row.expr).trim();
+    function scalar(text, fallback, field) {
+      if (text == null || String(text).trim() === '') return fallback;
+      const compiled=compileExpression(String(text), names);compiled.validateReal(params);
+      const value = compiled.evaluate(params);
+      if (!Number.isFinite(value)) fail(field + ' 必須是有限數值', null, 'RANGE');
+      return value;
+    }
+    function stripPrefix(text, variable) {
+      const pattern = new RegExp('^\\s*(?:' + variable + '|[a-zA-Z][a-zA-Z0-9_]*\\s*\\(\\s*' + (variable === 'y' && row.type === 'explicit' ? 'x' : 't') + '\\s*\\))\\s*=', 'i');
+      return text.replace(pattern, '').trim();
+    }
+    if (row.type === 'explicit') {
+      const compiled = compileExpression(stripPrefix(source, 'y'), ['x', ...names]);
+      compiled.validateReal(params);
+      const domainMin = scalar(row.domainMin, -Infinity, '定義域下限');
+      const domainMax = scalar(row.domainMax, Infinity, '定義域上限');
+      if (domainMin >= domainMax) fail('定義域下限必須小於上限', null, 'RANGE');
+      const scope = Object.assign(Object.create(null), params, { x: 0 });
+      return { type: 'explicit', source: compiled.source,normalizedKey:'explicit:'+compiled.canonical,variables: compiled.variables, domainMin, domainMax,
+        eval(x) { scope.x = x; return x < domainMin || x > domainMax ? NaN : compiled.evaluate(scope); } };
+    }
+    if (row.type === 'parametric') {
+      const compiledX = compileExpression(stripPrefix(source, 'x'), ['t', ...names]);
+      const compiledY = compileExpression(stripPrefix(String(row.exprY == null ? '' : row.exprY), 'y'), ['t', ...names]);
+      compiledX.validateReal(params);compiledY.validateReal(params);
+      const tMin = scalar(row.tMin, 0, 't 下限'); const tMax = scalar(row.tMax, 2 * Math.PI, 't 上限');
+      if (tMin >= tMax) fail('t 下限必須小於上限', null, 'RANGE');
+      const scope = Object.assign(Object.create(null), params, { t: 0 });
+      return { type: 'parametric', tMin, tMax, source: [compiledX.source, compiledY.source],normalizedKey:'parametric:'+compiledX.canonical+','+compiledY.canonical+';t='+tMin+':'+tMax,
+        variables: Array.from(new Set([...compiledX.variables, ...compiledY.variables])),
+        eval(t) { scope.t = t; return [compiledX.evaluate(scope), compiledY.evaluate(scope)]; } };
+    }
+    if (row.type === 'implicit') {
+      const parts = source.split('=');
+      if (parts.length > 2) fail('隱函數只接受一個等號', source.indexOf('=', source.indexOf('=') + 1));
+      const left = compileExpression(parts[0], ['x', 'y', ...names]);
+      const right = parts.length === 2 ? compileExpression(parts[1], ['x', 'y', ...names]) : null;
+      left.validateReal(params);if(right)right.validateReal(params);
+      const scope = Object.assign(Object.create(null), params, { x: 0, y: 0 });
+      return { type: 'implicit', source,normalizedKey:'implicit:'+left.canonical+'='+(right?right.canonical:'0'),variables: Array.from(new Set([...left.variables, ...(right ? right.variables : [])])),
+        eval(x, y) { scope.x = x; scope.y = y; return left.evaluate(scope) - (right ? right.evaluate(scope) : 0); } };
+    }
+    fail('未知的函數類型', null, 'TYPE');
+  }
+  function canonical(source,allowedVars){
+    const text=String(source==null?'':source).trim();
+    const prefix=text.match(/^y\s*=(?!=)([\s\S]*)$/i);
+    return compileExpression(prefix?prefix[1]:text,allowedVars||['x','a','b','c']).canonical;
+  }
+  function parseInput(input,options,parameterValues){
+    const original=String(input==null?'':input),text=original.trim(),range=options||{};
+    if(!text)fail('請輸入公式',0,'EMPTY');
+    if(original.length>LIMITS.characters)fail('公式最多 '+LIMITS.characters+' 個字元',LIMITS.characters,'BUDGET');
+    const comparison=text.search(/[<>≤≥≠]/);if(comparison>=0)fail('不支援不等式；請輸入函數或等式',comparison,'INEQUALITY');
+    const lines=text.split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
+    const params=parameterValues||{a:1,b:1,c:1},names=Object.keys(params).map(name=>name.toLowerCase());
+    const fields={type:'explicit',expr:'',exprY:'',tMin:String(range.tMin??'0'),tMax:String(range.tMax??'2*pi'),domainMin:String(range.domainMin??''),domainMax:String(range.domainMax??'')};
+    function equation(line){
+      const pieces=line.split('=');
+      if(pieces.length!==2)fail(pieces.length>2?'每個等式只能包含一個等號':'參數式分量缺少等號',0,'EQUATION');
+      if(!pieces[0].trim()||!pieces[1].trim())fail('等號兩側都必須有內容',line.indexOf('='),'EQUATION');
+      return pieces.map(piece=>piece.trim());
+    }
+    function component(line){
+      const pair=equation(line),match=pair[0].match(/^([xy])\s*(\(\s*t\s*\))?$/i);
+      if(!match)fail('參數式請分行輸入 x(t)=… 與 y(t)=…',0,'PARAMETRIC');
+      return {axis:match[1].toLowerCase(),marked:!!match[2],expr:pair[1]};
+    }
+    if(lines.length>1){
+      if(lines.length!==2)fail('每組參數式必須恰好包含 x(t) 與 y(t) 兩行',0,'PARAMETRIC');
+      const first=component(lines[0]),second=component(lines[1]);
+      if(first.axis===second.axis)fail('參數式缺少 '+(first.axis==='x'?'y(t)':'x(t)')+' 分量，請勿重複同一軸',0,'PARAMETRIC');
+      const x=first.axis==='x'?first:second,y=first.axis==='y'?first:second;
+      const cx=compileExpression(x.expr,['t',...names]),cy=compileExpression(y.expr,['t',...names]);
+      if(!x.marked&&!y.marked&&!cx.variables.includes('t')&&!cy.variables.includes('t'))fail('兩行一般等式請使用批次輸入；參數式請使用 x(t)、y(t)',0,'PARAMETRIC');
+      fields.type='parametric';fields.expr=x.expr;fields.exprY=y.expr;
+    }else if(!text.includes('='))fields.expr=text;
+    else{
+      const [left,right]=equation(text);
+      if(/^[xy]\s*\(\s*t\s*\)$/i.test(left))fail('參數式缺少另一行，請同時輸入 x(t)=… 與 y(t)=…',0,'PARAMETRIC');
+      if(/^[xy]$/i.test(left)){
+        const parsed=compileExpression(right,['x','y','t',...names]);
+        if(parsed.variables.includes('t'))fail('參數式缺少另一行，請同時輸入 x(t)=… 與 y(t)=…',0,'PARAMETRIC');
+      }
+      if(/^y$/i.test(left)||/^y$/i.test(right)){
+        const candidate=/^y$/i.test(left)?right:left;
+        const parsed=compileExpression(candidate,['x','y','t',...names]);
+        if(!parsed.variables.includes('y')&&!parsed.variables.includes('t'))fields.expr=candidate;
+        else{fields.type='implicit';fields.expr=text;}
+      }else{fields.type='implicit';fields.expr=text;}
+    }
+    const compiled=compileRow(fields,params);
+    compiled.fields={...fields};compiled.source=original;
+    return compiled;
+  }
+  root.MathEngine = Object.freeze({ compileExpression, compileRow,parseInput,canonical, MathParseError, limits: LIMITS,
+    supportedFunctions: Object.freeze(Object.keys(functions)), constants });
+})(typeof globalThis !== 'undefined' ? globalThis : window);
+
+</script>
+<script>
+/* Offline plotting engine. CSS pixel coordinates; view.scale is px per world unit.
+ * Curves are numerical approximations, not symbolic geometry. No eval or network.
+ * API: new PlotEngine(canvas, {onStatus}); await render({rows,compiled:Map,view,settings,selectedId});
+ * resize(w?,h?,dpr?), hitTest(x,y,tolerance=10), overlay(hit|null), toWorld(x,y),
+ * toScreen(x,y), geometryBounds(), getVisibleBounds(), cancel(), clearCache(id?).
+ * Atomic API: await prepare({rows,compiled,view,settings,signal,isCancelled,
+ * onlyIds,onProgress(done,total,id)}) => Map<id,{geometry,compiled}> with .stats,
+ * .view and .cancelled metadata. publish(staged,{rows,view,settings,replace})
+ * commits once. Concurrent prepares are independent unless cancel() is called.
+ * paintOnly(request), captureGeometry(), restoreGeometry(map) never evaluate.
+ * Bounds cover the currently visible rows' cached sampled geometry. hitTest and
+ * resize use CSS pixels; geometry and overlay points use world coordinates.
+ */
+(function (root) {
+  'use strict';
+  const finite = Number.isFinite;
+  const now = () => typeof performance !== 'undefined' ? performance.now() : Date.now();
+  const yieldFrame = () => new Promise(resolve => setTimeout(resolve, 0));
+  const QUALITY = {
+    low: {step: 9, tolerance: 1.4, grid: 12, param: 100, depth: 10, budget: 65000},
+    medium: {step: 5, tolerance: .7, grid: 7, param: 180, depth: 12, budget: 145000},
+    high: {step: 3, tolerance: .35, grid: 4, param: 300, depth: 14, budget: 260000}
+  };
+  const DEFAULT_COLORS = {background: '#ffffff', grid: '#e5eaf0', minor: '#f2f4f7', axis: '#9aa8b8', text: '#66758a', cross: '#263854'};
+  const DARK_COLORS = {background: '#1b1e2b', grid: '#2d3143', minor: '#242838', axis: '#76879f', text: '#a8b7ca', cross: '#e1e9f7'};
+  const empty = () => ({segments: [], evaluations: 0, truncated: false, note: ''});
+  function clipSegment(x0, y0, x1, y1, bounds, out) {
+    if (![x0,y0,x1,y1].every(finite)) return;
+    const dx = x1-x0, dy = y1-y0;
+    let t0=0, t1=1;
+    const p=[-dx,dx,-dy,dy], q=[x0-bounds.xmin,bounds.xmax-x0,y0-bounds.ymin,bounds.ymax-y0];
+    for (let i=0;i<4;i++) {
+      if (p[i]===0) { if(q[i]<0) return; }
+      else { const t=q[i]/p[i]; if(p[i]<0) { if(t>t1)return; if(t>t0)t0=t; } else { if(t<t0)return; if(t<t1)t1=t; } }
+    }
+    out.push(x0+t0*dx,y0+t0*dy,x0+t1*dx,y0+t1*dy);
+  }
+  function niceStep(target) {
+    const exponent = 10 ** Math.floor(Math.log10(target));
+    const f = target/exponent;
+    return exponent*(f<=1?1:f<=2?2:f<=5?5:10);
+  }
+  function label(value, step) {
+    if (Math.abs(value) < step*1e-6) return '0';
+    const abs = Math.abs(value);
+    if (abs>=1e6 || abs<1e-4) return value.toExponential(2).replace(/\.00e/, 'e').replace(/e\+/, 'e');
+    const digits = Math.max(0, Math.min(9, -Math.floor(Math.log10(step))));
+    return Number(value.toFixed(digits+1)).toString();
+  }
+  function curveType(row, c) {
+    const t = String(c.type || row.type || 'explicit').toLowerCase();
+    return t==='param' || t==='parametric' || t==='parameter' ? 'parametric' : t==='implicit' ? 'implicit' : 'explicit';
+  }
+  function boundsOf(segments) {
+    if(!segments.length)return null;
+    let xmin=Infinity,xmax=-Infinity,ymin=Infinity,ymax=-Infinity;
+    for(let i=0;i<segments.length;i+=2){const x=segments[i],y=segments[i+1];if(x<xmin)xmin=x;if(x>xmax)xmax=x;if(y<ymin)ymin=y;if(y>ymax)ymax=y;}
+    return {xmin,xmax,ymin,ymax};
+  }
+  function safeView(v) {return {cx:finite(v?.cx)?v.cx:0,cy:finite(v?.cy)?v.cy:0,scale:finite(v?.scale)&&v.scale>0?Math.max(1e-8,Math.min(1e12,v.scale)):50};}
+  function qualityFor(settings,count) {
+    const base=QUALITY[settings.quality]||QUALITY.medium;
+    const nav=typeof navigator!=='undefined'?navigator:{};
+    const device=Math.max(.4,Math.min(1.5,Math.sqrt((Number(nav.deviceMemory)||8)/8)*Math.sqrt((Number(nav.hardwareConcurrency)||4)/4)));
+    const supplied=Number(settings.resourceFactor);
+    const factor=Math.max(.12,Math.min(2,(finite(supplied)&&supplied>0?supplied:device)/Math.sqrt(Math.max(1,count/4))));
+    return {...base,step:base.step/Math.sqrt(factor),tolerance:base.tolerance/Math.sqrt(factor),grid:base.grid/Math.sqrt(factor),param:Math.max(24,Math.round(base.param*Math.sqrt(factor))),budget:Math.max(8000,Math.min(600000,Math.floor(base.budget*factor))),factor,level:settings.quality||'medium'};
+  }
+  class PlotEngine {
+    constructor(canvas, options={}) {
+      this.canvas=canvas;
+      this.ctx=canvas.getContext('2d');
+      this.onStatus=options.onStatus || (()=>{});
+      this.view={cx:0,cy:0,scale:50};
+      this.width=1;this.height=1;this.dpr=1;
+      this.generation=0;this.cache=new Map();this.lastGeometry=new Map();
+      this.rows=[];this.settings={};this.point=null;this.stats={};
+      this._jobs=new Set();this._cancelEpoch=0;this.totalEvaluations=0;
+      this.resize();
+    }
+    resize(width,height,dpr) {
+      const rect=this.canvas.getBoundingClientRect();
+      this.width=Math.max(1,Number(width)||rect.width||this.canvas.clientWidth||800);
+      this.height=Math.max(1,Number(height)||rect.height||this.canvas.clientHeight||600);
+      this.dpr=Math.max(1,Math.min(3,Number(dpr)||(typeof devicePixelRatio!=='undefined'?devicePixelRatio:1)||1));
+      this.canvas.width=Math.round(this.width*this.dpr);this.canvas.height=Math.round(this.height*this.dpr);
+      this.ctx.setTransform(this.dpr,0,0,this.dpr,0,0);
+      return {width:this.width,height:this.height,dpr:this.dpr};
+    }
+    toWorld(x,y) { return {x:this.view.cx+(x-this.width/2)/this.view.scale,y:this.view.cy-(y-this.height/2)/this.view.scale}; }
+    toScreen(x,y) { return {x:this.width/2+(x-this.view.cx)*this.view.scale,y:this.height/2-(y-this.view.cy)*this.view.scale}; }
+    cancel() { this.generation++;this._cancelEpoch++;for(const job of this._jobs)job.cancelled=true; }
+    get busy() {return this._jobs.size>0;}
+    clearCache(id) { if(id===undefined){this.cache.clear();this.lastGeometry.clear();}else{this.cache.delete(id);this.lastGeometry.delete(id);} }
+    geometryBounds() {
+      let bounds=null;
+      for(const row of this.rows){
+        if(row.visible===false)continue;
+        const b=this.lastGeometry.get(row.id)?.geometry.bounds;if(!b)continue;
+        if(!bounds)bounds={...b};
+        else{bounds.xmin=Math.min(bounds.xmin,b.xmin);bounds.xmax=Math.max(bounds.xmax,b.xmax);bounds.ymin=Math.min(bounds.ymin,b.ymin);bounds.ymax=Math.max(bounds.ymax,b.ymax);}
+      }
+      return bounds;
+    }
+    getVisibleBounds() { return this.geometryBounds(); }
+    captureGeometry() { return new Map(this.lastGeometry); }
+    restoreGeometry(snapshot,request) {this.lastGeometry=new Map(snapshot||[]);if(request)this.paintOnly(request);else this._paint();return this.lastGeometry;}
+    paintOnly(request={}) {
+      if(request.rows)this.rows=request.rows;
+      if(request.view)this.view=safeView(request.view);
+      if(request.settings)this.settings=request.settings;
+      if(Object.prototype.hasOwnProperty.call(request,'selectedId'))this.selectedId=request.selectedId;
+      this.point=null;this._paint();return this.stats;
+    }
+    async prepare(request={}) {
+      const start=now(),view=safeView(request.view||this.view),width=this.width,height=this.height;
+      const settings={...(request.settings||this.settings)},rows=(request.rows||this.rows).map(r=>({...r})),compiled=new Map(request.compiled||[]);
+      const only=request.onlyIds?new Set(request.onlyIds):null;
+      const allVisible=rows.filter(r=>r.visible!==false&&compiled.get(r.id));
+      const visible=only?allVisible.filter(r=>only.has(r.id)):allVisible;
+      const q=qualityFor(settings,allVisible.length),key=[view.cx,view.cy,view.scale,width,height,settings.quality||'medium',q.budget].join('|');
+      const bounds={xmin:view.cx-(width/2+3)/view.scale,xmax:view.cx+(width/2+3)/view.scale,ymin:view.cy-(height/2+3)/view.scale,ymax:view.cy+(height/2+3)/view.scale};
+      const staged=new Map(),job={cancelled:false,epoch:this._cancelEpoch};
+      Object.assign(staged,{view,settings,width,height,stats:{},cancelled:false});
+      const cancelled=()=>job.cancelled||job.epoch!==this._cancelEpoch||request.signal?.aborted||Boolean(request.isCancelled?.());
+      Object.defineProperty(staged,'_isCancelled',{value:cancelled});
+      this._jobs.add(job);
+      let samples=0,reused=0,truncated=false,done=0;const notes=[];
+      const progress=()=>{try{request.onProgress?.(done,visible.length,visible[done-1]?.id);}catch(_){}};
+      const checkpoint=async(force=false)=>{
+        if(cancelled())throw new Error('cancelled');
+        if(force||now()-checkpoint.last>8){await yieldFrame();checkpoint.last=now();if(cancelled())throw new Error('cancelled');}
+      };checkpoint.last=now();
+      try {
+        progress();
+        for(const row of visible){
+          await checkpoint();const c=compiled.get(row.id),type=curveType(row,c);
+          const cacheEntry=this.cache.get(row.id);
+          let geometry=cacheEntry?.compiled===c?cacheEntry.views.get(key):null;
+          if(geometry)reused++;
+          else{
+            geometry=type==='implicit'?await this._implicit(c,bounds,view,q,checkpoint,width,height):await this._oneD(c,type,bounds,view,q,checkpoint,width,height);
+            samples+=geometry.evaluations;
+            await checkpoint();geometry.bounds=boundsOf(geometry.segments);
+            // Precomputation may populate a private cache but never display state.
+            let entry=this.cache.get(row.id);if(!entry||entry.compiled!==c){entry={compiled:c,views:new Map()};this.cache.set(row.id,entry);}
+            entry.views.set(key,geometry);while(entry.views.size>3)entry.views.delete(entry.views.keys().next().value);
+          }
+          staged.set(row.id,{geometry,compiled:c});
+          if(geometry.note)notes.push({id:row.id,note:geometry.note});truncated||=geometry.truncated;
+          done++;progress();
+        }
+        await checkpoint();
+        staged.stats={busy:false,phase:'complete',milliseconds:Math.round((now()-start)*10)/10,evaluations:samples,totalEvaluations:this.totalEvaluations,reused,curves:visible.length,truncated,notes,resourceFactor:q.factor,budgetPerCurve:q.budget,segments:[...staged.values()].reduce((n,e)=>n+e.geometry.segments.length/4,0)};
+      } catch(error){
+        if(cancelled()||error.message==='cancelled'){staged.clear();staged.cancelled=true;staged.stats={cancelled:true,evaluations:samples,milliseconds:now()-start};}
+        else{staged.clear();staged.error=String(error.message||error);staged.stats={error:staged.error,evaluations:samples,milliseconds:now()-start};}
+      } finally {this._jobs.delete(job);}
+      return staged;
+    }
+    publish(staged,request={}) {
+      const source=staged?.geometries||staged;
+      if(!source||staged.cancelled||staged.error||staged._isCancelled?.())return {cancelled:true};
+      const rows=request.rows||this.rows,ids=new Set(rows.map(r=>r.id));
+      const merged=request.replace?new Map():new Map(this.lastGeometry);
+      for(const [id,entry]of source)if(ids.has(id))merged.set(id,entry);
+      for(const id of merged.keys())if(!ids.has(id))merged.delete(id);
+      this.lastGeometry=merged;this.stats=staged.stats||this.stats;
+      this.paintOnly({...request,rows,view:request.view||staged.view||this.view,settings:request.settings||this.settings});
+      this._status(this.stats);return this.stats;
+    }
+    _status(status) { try { this.onStatus(status); } catch (_) {} }
+    async render(request) {
+      const token=++this.generation, start=now();
+      this.rows=request.rows || [];
+      this.settings=request.settings || {};
+      this.selectedId=request.selectedId;
+      const v=request.view || this.view;
+      this.view={cx:finite(v.cx)?v.cx:0,cy:finite(v.cy)?v.cy:0,scale:finite(v.scale)&&v.scale>0?Math.max(1e-8,Math.min(1e12,v.scale)):50};
+      const view={...this.view}, width=this.width,height=this.height;
+      const bounds={xmin:view.cx-(width/2+3)/view.scale,xmax:view.cx+(width/2+3)/view.scale,ymin:view.cy-(height/2+3)/view.scale,ymax:view.cy+(height/2+3)/view.scale};
+      const compiled=request.compiled || new Map();
+      const visible=this.rows.filter(r=>r.visible!==false && compiled.get(r.id));
+      const q=qualityFor(this.settings,visible.length);
+      const key=[view.cx,view.cy,view.scale,width,height,this.settings.quality||'medium',q.budget].join('|');
+      const ids=new Set(this.rows.map(r=>r.id));
+      for(const id of this.cache.keys())if(!ids.has(id))this.clearCache(id);
+      this.point=null;
+      this._paint();
+      this._status({busy:true,phase:'sampling',curves:visible.length});
+      let samples=0,reused=0,truncated=false;
+      const notes=[];
+      const checkpoint=async(force=false)=> {
+        if(token!==this.generation)throw new Error('cancelled');
+        if(force || now()-checkpoint.last>8){await yieldFrame();checkpoint.last=now();if(token!==this.generation)throw new Error('cancelled');}
+      };
+      checkpoint.last=now();
+      try {
+        for(const row of visible) {
+          const c=compiled.get(row.id), type=curveType(row,c);
+          let entry=this.cache.get(row.id);
+          if(!entry || entry.compiled!==c){entry={compiled:c,views:new Map()};this.cache.set(row.id,entry);}
+          let geometry=entry.views.get(key);
+          if(geometry){reused++;entry.views.delete(key);entry.views.set(key,geometry);}
+          else {
+            geometry=type==='implicit' ? await this._implicit(c,bounds,view,q,checkpoint,width,height) : await this._oneD(c,type,bounds,view,q,checkpoint,width,height);
+            await checkpoint();
+            geometry.bounds=boundsOf(geometry.segments);
+            entry.views.set(key,geometry);
+            while(entry.views.size>3)entry.views.delete(entry.views.keys().next().value);
+            samples+=geometry.evaluations;
+          }
+          this.lastGeometry.set(row.id,{geometry,compiled:c});
+          if(geometry.note)notes.push({id:row.id,note:geometry.note});
+          truncated ||= geometry.truncated;
+          this._paint();
+          await checkpoint();
+        }
+        if(token!==this.generation)return {cancelled:true};
+        this.stats={busy:false,phase:'complete',milliseconds:Math.round((now()-start)*10)/10,evaluations:samples,totalEvaluations:this.totalEvaluations,reused,curves:visible.length,truncated,notes,resourceFactor:q.factor,budgetPerCurve:q.budget,segments:visible.reduce((n,r)=>n+(this.lastGeometry.get(r.id)?.geometry.segments.length||0)/4,0)};
+        this._paint();this._status(this.stats);return this.stats;
+      } catch(error) {
+        if(token!==this.generation || error.message==='cancelled')return {cancelled:true};
+        const status={busy:false,error:String(error.message||error),milliseconds:now()-start};this._status(status);return status;
+      }
+    }
+    async _oneD(c,type,bounds,view,q,checkpoint,width,height) {
+      const result=empty(),out=result.segments, scale=view.scale;
+      let min=type==='parametric'?Number(c.tMin):Math.max(bounds.xmin,c.domainMin===undefined?-Infinity:Number(c.domainMin));
+      let max=type==='parametric'?Number(c.tMax):Math.min(bounds.xmax,c.domainMax===undefined?Infinity:Number(c.domainMax));
+      if(type==='parametric'){if(!finite(min))min=-Math.PI;if(!finite(max))max=Math.PI;}
+      if(!finite(min)||!finite(max)||max<=min)return result;
+      const n=type==='parametric'?q.param:Math.max(1,Math.ceil((max-min)*scale/q.step));
+      const maxN=Math.min(10000,n), pointCache=new Map();
+      const evaluate=t=>{
+        if(pointCache.has(t))return pointCache.get(t);
+        if(result.evaluations>=q.budget){result.truncated=true;return [NaN,NaN];}
+        result.evaluations++;this.totalEvaluations++;
+        let p;
+        try { const value=c.eval(t);p=type==='parametric'?(Array.isArray(value)||ArrayBuffer.isView(value)?[Number(value[0]),Number(value[1])]:[Number(value?.x),Number(value?.y)]):[t,Number(value)]; }
+        catch(_){p=[NaN,NaN];}
+        if(!finite(p[0])||!finite(p[1]))p=[NaN,NaN];
+        pointCache.set(t,p);return p;
+      };
+      const add=(a,b)=>clipSegment(a[0],a[1],b[0],b[1],bounds,out);
+      const recurse=(ta,a,tb,b,depth)=>{
+        const tm=ta+(tb-ta)/2;if(tm===ta||tm===tb)return;
+        const m=evaluate(tm),goodA=finite(a[0]),goodB=finite(b[0]),goodM=finite(m[0]);
+        if(!goodA&&!goodB&&!goodM)return;
+        if(!goodA||!goodB||!goodM){if(depth<q.depth && !result.truncated){recurse(ta,a,tm,m,depth+1);recurse(tm,m,tb,b,depth+1);}return;}
+        const dx=(b[0]-a[0])*scale,dy=(b[1]-a[1])*scale;
+        const mx=(m[0]-(a[0]+b[0])/2)*scale,my=(m[1]-(a[1]+b[1])/2)*scale;
+        const error=Math.hypot(mx,my),length=Math.hypot(dx,dy);
+        const outside=(a[0]<bounds.xmin&&b[0]<bounds.xmin&&m[0]<bounds.xmin)||(a[0]>bounds.xmax&&b[0]>bounds.xmax&&m[0]>bounds.xmax)||(a[1]<bounds.ymin&&b[1]<bounds.ymin&&m[1]<bounds.ymin)||(a[1]>bounds.ymax&&b[1]>bounds.ymax&&m[1]>bounds.ymax);
+        if(outside && error<q.tolerance*2)return;
+        const refine=error>q.tolerance || (type==='parametric'&&length>18) || (!outside&&length>Math.max(100,height*.4));
+        if(refine&&depth<q.depth&&!result.truncated){recurse(ta,a,tm,m,depth+1);recurse(tm,m,tb,b,depth+1);return;}
+        // An unresolved jump or unbounded midpoint is never bridged across a pole.
+        if(error>Math.max(4,q.tolerance*8)||(!outside&&length>Math.max(width,height)*2))return;
+        add(a,m);add(m,b);
+      };
+      let ta=min,a=evaluate(min);
+      for(let i=1;i<=maxN;i++){
+        const tb=i===maxN?max:min+(max-min)*i/maxN,b=evaluate(tb);
+        recurse(ta,a,tb,b,0);ta=tb;a=b;
+        if(i%16===0)await checkpoint();
+        if(result.truncated)break;
+      }
+      if(result.truncated)result.note='取樣已達上限；可縮小視窗或參數範圍後重試。';
+      return result;
+    }
+    async _implicit(c,bounds,view,q,checkpoint,width,height) {
+      const result=empty(),out=result.segments;
+      let nx=Math.max(2,Math.ceil((width+6)/(q.grid*4))),ny=Math.max(2,Math.ceil((height+6)/(q.grid*4)));
+      // A bounded coarse grid discovers cells to refine; most of the budget is
+      // reserved for local subdivision and root residual checks near contours.
+      const vertexBudget=Math.max(16,Math.min(20000,Math.floor(q.budget*.1)));
+      const requestedVertices=(nx+1)*(ny+1);
+      const coarsened=requestedVertices>vertexBudget;
+      if(coarsened){
+        const factor=Math.sqrt(requestedVertices/vertexBudget);
+        nx=Math.max(2,Math.floor(nx/factor));ny=Math.max(2,Math.floor(ny/factor));
+        while((nx+1)*(ny+1)>vertexBudget){if(nx>=ny&&nx>2)nx--;else if(ny>2)ny--;else break;}
+      }
+      const maxDepth=q.level==='high'?4:q.level==='low'?2:3,unit=2**maxDepth;
+      const fineNx=nx*unit,fineNy=ny*unit,stride=fineNx*2+1;
+      const sx=(bounds.xmax-bounds.xmin)/fineNx,sy=(bounds.ymax-bounds.ymin)/fineNy;
+      const sampleCache=new Map(),edgeCache=new Map();
+      result.adaptiveCells=0;result.refinedCells=0;result.maxSubdivisionDepth=0;
+      let nonzero=false,invalid=0;
+      const evaluate=(x,y)=>{
+        if(result.evaluations>=q.budget){result.truncated=true;return NaN;}
+        result.evaluations++;this.totalEvaluations++;
+        try{const z=Number(c.eval(x,y));return finite(z)?z:NaN;}catch(_){return NaN;}
+      };
+      const sample=(ix,iy)=>{
+        const key=iy*2*stride+ix*2;if(sampleCache.has(key))return sampleCache.get(key);
+        const z=evaluate(bounds.xmin+ix*sx,bounds.ymax-iy*sy);sampleCache.set(key,z);return z;
+      };
+      for(let j=0;j<=ny;j++){
+        for(let i=0;i<=nx;i++){const z=sample(i*unit,j*unit);if(finite(z)){if(z!==0)nonzero=true;}else invalid++;}
+        await checkpoint();
+      }
+      if(!nonzero){result.note=invalid===sampleCache.size?'此視窗沒有可計算的實數值。':'等式在取樣點均成立；無法以單一輪廓表示。';return result;}
+      const rootOnEdge=(ax,ay,az,bx,by,bz,key)=>{
+        if(edgeCache.has(key))return edgeCache.get(key);
+        let p=null;
+        if(!finite(az)||!finite(bz)||(az>0)===(bz>0) && az!==0 && bz!==0){edgeCache.set(key,null);return null;}
+        if(az===0)p=[ax,ay];else if(bz===0)p=[bx,by];
+        else {
+          let lo=0,hi=1,fl=az,fh=bz,best=Math.abs(az)<Math.abs(bz)?0:1,bestF=Math.min(Math.abs(az),Math.abs(bz));
+          const reference=Math.max(Math.abs(az),Math.abs(bz),Number.MIN_VALUE);
+          // Safeguarded secant/bisection also rejects sign flips caused by poles.
+          for(let k=0;k<10;k++){
+            let t=(lo*Math.abs(fh)+hi*Math.abs(fl))/(Math.abs(fl)+Math.abs(fh));
+            if(!finite(t)||t<lo+(hi-lo)*.08||t>hi-(hi-lo)*.08)t=(lo+hi)/2;
+            const f=evaluate(ax+(bx-ax)*t,ay+(by-ay)*t);
+            if(!finite(f)){bestF=Infinity;break;}
+            if(Math.abs(f)<bestF){best=t;bestF=Math.abs(f);}
+            if(f===0){best=t;bestF=0;break;}
+            if((fl>0)===(f>0)){lo=t;fl=f;}else{hi=t;fh=f;}
+          }
+          if(bestF/reference<.12)p=[ax+(bx-ax)*best,ay+(by-ay)*best];
+        }
+        edgeCache.set(key,p);return p;
+      };
+      for(let j=0;j<ny&&!result.truncated;j++){
+        const stack=[];for(let i=nx-1;i>=0;i--)stack.push({ix:i*unit,iy:j*unit,size:unit,depth:0});
+        let cellsSinceYield=0;
+        while(stack.length&&!result.truncated){
+          if(++cellsSinceYield>=48){await checkpoint();cellsSinceYield=0;}
+          const {ix,iy,size,depth}=stack.pop(),half=size/2;
+          const z=[sample(ix,iy),sample(ix+size,iy),sample(ix+size,iy+size),sample(ix,iy+size)];
+          const center=sample(ix+half,iy+half),good=z.every(finite);
+          result.adaptiveCells++;result.maxSubdivisionDepth=Math.max(result.maxSubdivisionDepth,depth);
+          const mask=(z[0]>0?1:0)|(z[1]>0?2:0)|(z[2]>0?4:0)|(z[3]>0?8:0);
+          const crossed=mask!==0&&mask!==15;
+          const scale=Math.max(...z.filter(finite).map(Math.abs),Math.abs(center)||0,Number.MIN_VALUE);
+          const curvature=good&&finite(center)?Math.abs(center-z.reduce((a,b)=>a+b,0)/4)/scale:1;
+          const interior=finite(center)&&good&&((mask===0&&center>0)||(mask===15&&center<0)||center===0);
+          const refine=depth<maxDepth&&(depth<1||(crossed&&depth<2)||interior||curvature>.10||(!good&&finite(center)));
+          if(refine){
+            result.refinedCells++;
+            stack.push({ix:ix+half,iy:iy+half,size:half,depth:depth+1},{ix,iy:iy+half,size:half,depth:depth+1},{ix:ix+half,iy,size:half,depth:depth+1},{ix,iy,size:half,depth:depth+1});
+            continue;
+          }
+          if(!good||!finite(center))continue;
+          const left=bounds.xmin+ix*sx,right=bounds.xmin+(ix+size)*sx;
+          const top=bounds.ymax-iy*sy,bottom=bounds.ymax-(iy+size)*sy;
+          if(mask===0||mask===15){
+            // Exact zero edges recover grid-aligned degenerate zero sets.
+            if(z[0]===0&&z[1]===0)clipSegment(left,top,right,top,bounds,out);
+            if(z[0]===0&&z[3]===0)clipSegment(left,top,left,bottom,bounds,out);
+            if(iy+size===fineNy&&z[2]===0&&z[3]===0)clipSegment(left,bottom,right,bottom,bounds,out);
+            if(ix+size===fineNx&&z[1]===0&&z[2]===0)clipSegment(right,top,right,bottom,bounds,out);
+            continue;
+          }
+          const edges=[
+            ()=>rootOnEdge(left,top,z[0],right,top,z[1],'h'+iy+':'+ix+':'+size),
+            ()=>rootOnEdge(right,top,z[1],right,bottom,z[2],'v'+iy+':'+(ix+size)+':'+size),
+            ()=>rootOnEdge(left,bottom,z[3],right,bottom,z[2],'h'+(iy+size)+':'+ix+':'+size),
+            ()=>rootOnEdge(left,top,z[0],left,bottom,z[3],'v'+iy+':'+ix+':'+size)
+          ];
+          const crossings=[];
+          for(let e=0;e<4;e++){const a=e,b=(e+1)%4;if((z[a]>0)!==(z[b]>0))crossings.push(e);}
+          let pairs=[];
+          if(crossings.length===2)pairs=[[crossings[0],crossings[1]]];
+          else if(crossings.length===4){
+            let decision=center;
+            // Resolve saddles using the sampled center; both connections stay local.
+            if(decision===0){const normalizer=Math.max(...z.map(Math.abs));decision=(z[0]/normalizer)*(z[2]/normalizer)-(z[1]/normalizer)*(z[3]/normalizer);}
+            pairs=(decision>0)===(z[0]>0)?[[0,1],[2,3]]:[[0,3],[1,2]];
+          }
+          for(const [ea,eb]of pairs){const a=edges[ea](),b=edges[eb]();if(a&&b)clipSegment(a[0],a[1],b[0],b[1],bounds,out);}
+        }
+        await checkpoint();
+      }
+      if(result.truncated)result.note='隱函數取樣已達上限，部分輪廓可能未完成；請縮小視窗或降低品質。';
+      else if(coarsened){result.truncated=true;result.note='視窗較大，已依取樣上限自動調整隱函數網格密度。';}
+      return result;
+    }
+    _colors() {
+      const dark=this.settings.dark || this.settings.theme==='dark' || (this.settings.theme==='system'&&typeof matchMedia!=='undefined'&&matchMedia('(prefers-color-scheme: dark)').matches);
+      return {...(dark?DARK_COLORS:DEFAULT_COLORS),...(this.settings.colors||{}),...(this.settings.background?{background:this.settings.background}:{})};
+    }
+    _paint() {
+      const ctx=this.ctx,w=this.width,h=this.height,colors=this._colors();
+      ctx.setTransform(this.dpr,0,0,this.dpr,0,0);ctx.clearRect(0,0,w,h);ctx.fillStyle=colors.background;ctx.fillRect(0,0,w,h);
+      this._grid(colors);
+      ctx.save();ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip();
+      for(const row of this.rows){
+        if(row.visible===false)continue;
+        const cached=this.lastGeometry.get(row.id);if(!cached)continue;
+        const data=cached.geometry.segments;
+        ctx.strokeStyle=row.color||'#2970e3';ctx.lineWidth=Math.max(1,Math.min(8,Number(row.width)||2.3));
+        ctx.lineCap='round';ctx.lineJoin='round';
+        ctx.setLineDash(row.dash===true||row.dash==='dashed'?[7,5]:row.dash==='dotted'?[2,5]:[]);
+        ctx.beginPath();let lastX=NaN,lastY=NaN;
+        for(let i=0;i<data.length;i+=4){const a=this.toScreen(data[i],data[i+1]),b=this.toScreen(data[i+2],data[i+3]);if(![a.x,a.y,b.x,b.y].every(finite))continue;if(a.x!==lastX||a.y!==lastY)ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);lastX=b.x;lastY=b.y;}
+        ctx.stroke();
+      }
+      ctx.restore();
+      if(this.point)this._drawOverlay(this.point,colors);
+    }
+    _grid(colors) {
+      const ctx=this.ctx,w=this.width,h=this.height,scale=this.view.scale;
+      const xmin=this.view.cx-w/(2*scale),xmax=this.view.cx+w/(2*scale),ymin=this.view.cy-h/(2*scale),ymax=this.view.cy+h/(2*scale);
+      const step=niceStep(75/scale),minor=step/5;
+      const lines=(distance,color)=>{
+        ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=1;ctx.setLineDash([]);
+        let count=0;
+        for(let x=Math.ceil(xmin/distance)*distance;x<=xmax&&count++<2000;x+=distance){const px=this.toScreen(x,0).x;ctx.moveTo(Math.round(px)+.5,0);ctx.lineTo(Math.round(px)+.5,h);}
+        count=0;
+        for(let y=Math.ceil(ymin/distance)*distance;y<=ymax&&count++<2000;y+=distance){const py=this.toScreen(0,y).y;ctx.moveTo(0,Math.round(py)+.5);ctx.lineTo(w,Math.round(py)+.5);}
+        ctx.stroke();
+      };
+      if(this.settings.grid!==false){if(minor*scale>=11)lines(minor,colors.minor);lines(step,colors.grid);}
+      const origin=this.toScreen(0,0);
+      if(this.settings.axes!==false){
+        ctx.strokeStyle=colors.axis;ctx.lineWidth=1.25;ctx.beginPath();
+        if(origin.x>=0&&origin.x<=w){ctx.moveTo(origin.x,0);ctx.lineTo(origin.x,h);}
+        if(origin.y>=0&&origin.y<=h){ctx.moveTo(0,origin.y);ctx.lineTo(w,origin.y);}ctx.stroke();
+      }
+      if(this.settings.labels!==false){
+        ctx.font='11px system-ui, sans-serif';ctx.fillStyle=colors.text;
+        const textY=Math.max(15,Math.min(h-7,origin.y+16)),textX=Math.max(7,Math.min(w-8,origin.x-8));
+        ctx.textAlign='center';ctx.textBaseline='alphabetic';
+        let count=0;
+        for(let x=Math.ceil(xmin/step)*step;x<=xmax&&count++<500;x+=step){if(Math.abs(x)<step*1e-6)continue;const px=this.toScreen(x,0).x;if(px>18&&px<w-18)ctx.fillText(label(x,step),px,textY);}
+        ctx.textAlign=textX<25?'left':'right';ctx.textBaseline='middle';count=0;
+        for(let y=Math.ceil(ymin/step)*step;y<=ymax&&count++<500;y+=step){if(Math.abs(y)<step*1e-6)continue;const py=this.toScreen(0,y).y;if(py>13&&py<h-13)ctx.fillText(label(y,step),textX,py);}
+        if(origin.x>10&&origin.x<w-10&&origin.y>10&&origin.y<h-10){ctx.textAlign='right';ctx.fillText('0',origin.x-7,origin.y+14);}
+      }
+    }
+    hitTest(x,y,tolerance=10) {
+      let best=null,bestDistance=tolerance*tolerance;
+      for(const row of this.rows){
+        if(row.visible===false)continue;
+        const cached=this.lastGeometry.get(row.id);if(!cached)continue;
+        const d=cached.geometry.segments;
+        for(let i=0;i<d.length;i+=4){
+          const a=this.toScreen(d[i],d[i+1]),b=this.toScreen(d[i+2],d[i+3]);
+          const dx=b.x-a.x,dy=b.y-a.y,den=dx*dx+dy*dy;
+          const t=den?Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/den)):0;
+          const sx=a.x+t*dx,sy=a.y+t*dy,dist=(x-sx)**2+(y-sy)**2;
+          if(dist<=bestDistance+1e-8){bestDistance=dist;best={id:row.id,x:d[i]+t*(d[i+2]-d[i]),y:d[i+1]+t*(d[i+3]-d[i+1]),screenX:sx,screenY:sy,distance:Math.sqrt(dist),color:row.color,type:curveType(row,cached.compiled)};}
+        }
+      }
+      return best;
+    }
+    overlay(point) {this.point=point;this._paint();}
+    _drawOverlay(p,colors) {
+      const ctx=this.ctx,screen=this.toScreen(p.x,p.y),x=screen.x,y=screen.y;
+      if(x<0||x>this.width||y<0||y>this.height)return;
+      ctx.save();ctx.strokeStyle=colors.axis;ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,this.height);ctx.moveTo(0,y);ctx.lineTo(this.width,y);ctx.stroke();
+      ctx.setLineDash([]);ctx.fillStyle=colors.background;ctx.strokeStyle=p.color||colors.cross;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore();
+    }
+  }
+  root.PlotEngine=PlotEngine;
+  if(typeof module!=='undefined'&&module.exports)module.exports=PlotEngine;
+})(typeof globalThis!=='undefined'?globalThis:this);
+
+</script>
+<script>
+/* SRS v7.5: offline drafts, atomic draw and versioned local sampling. */
+(() => {'use strict';
+const $=id=>document.getElementById(id),clone=x=>JSON.parse(JSON.stringify(x)),tick=()=>new Promise(r=>setTimeout(r,0));
+const STORE='function-canvas:srs7.5:v2',LEGACY='function-canvas:7.5:v1',COLORS=['#7460dd','#159b8f','#df8846','#dc628b','#4b87d2','#99a633'];
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const icon=n=>`<svg viewBox="0 0 24 24" aria-hidden="true">${({undo:'<path d="m9 5-5 5 5 5M4 10h9a6 6 0 0 1 0 12"/>',redo:'<path d="m15 5 5 5-5 5M20 10h-9a6 6 0 0 0 0 12"/>',help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4m0 3h.01"/>',settings:'<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="var(--panel)"/><circle cx="15" cy="17" r="3" fill="var(--panel)"/>',home:'<path d="m4 11 8-7 8 7M6 10v10h12V10M10 20v-6h4v6"/>',eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',eyeOff:'<path d="m3 3 18 18M10 5a12 12 0 0 1 12 7 20 20 0 0 1-4 4M6 6a19 19 0 0 0-4 6s4 7 10 7a12 12 0 0 0 5-1"/>',up:'<path d="m6 14 6-6 6 6"/>',down:'<path d="m6 10 6 6 6-6"/>'})[n]||''}</svg>`;
+const defaults=()=>({theme:'system',grid:true,axes:true,labels:true,crosshair:true,snap:true,quality:'medium',lineWidth:2.4}),blank=(text='')=>({text,tMin:'0',tMax:'2*pi',domainMin:'',domainMax:''});
+let serial=0;const uid=()=>`f-${Date.now().toString(36)}-${(++serial).toString(36)}`;
+let state={version:2,nextNumber:1,rows:[],view:{cx:0,cy:0,scale:20},defaultView:true,settings:defaults(),selectedId:null};
+function makeRow(text=''){const n=state.nextNumber++;return {id:uid(),name:`函數 ${n}`,color:COLORS[(n-1)%COLORS.length],visible:true,dash:'solid',draft:blank(text),committed:null,error:'',note:''};}
+function validView(v){return v&&[v.cx,v.cy,v.scale].every(Number.isFinite)&&Math.abs(v.cx)<=1e12&&Math.abs(v.cy)<=1e12&&v.scale>=1e-6&&v.scale<=1e8&&Math.max(Math.abs(v.cx),Math.abs(v.cy))*Number.EPSILON*v.scale<=.25;}
+function safeFields(d){if(!d||typeof d.text!=='string'||d.text.length>1000000)throw Error('公式資料超出允許長度');const out=blank(d.text);for(const k of ['tMin','tMax','domainMin','domainMax'])if(typeof d[k]==='string'&&d[k].length<=2048)out[k]=d[k];return out;}
+function sanitize(v){if(!v||v.version!==2||!Array.isArray(v.rows))throw Error('資料版本不相容');const ids=new Set(),s=defaults(),raw=v.settings||{};for(const k of Object.keys(s))if(Object.hasOwn(raw,k))s[k]=raw[k];if(!['light','dark','system'].includes(s.theme)||!['low','medium','high'].includes(s.quality))throw Error('設定無效');for(const k of ['grid','axes','labels','crosshair','snap'])s[k]=!!s[k];s.lineWidth=Math.min(6,Math.max(1,Number(s.lineWidth)||2.4));const rows=v.rows.map(r=>{if(!r||typeof r.id!=='string'||!/^[\w-]{1,80}$/.test(r.id)||ids.has(r.id))throw Error('識別碼無效');ids.add(r.id);return {id:r.id,name:typeof r.name==='string'?r.name.slice(0,100):'未命名函數',color:/^#[a-f0-9]{6}$/i.test(r.color)?r.color:COLORS[0],visible:!!r.visible,dash:['solid','dashed','dotted'].includes(r.dash)?r.dash:'solid',draft:safeFields(r.draft),committed:null,error:'',note:''};});if(!validView(v.view))throw Error('視角無效');return {version:2,nextNumber:Math.max(rows.length+1,Number.isSafeInteger(v.nextNumber)&&v.nextNumber>0?v.nextNumber:1),rows,view:{cx:v.view.cx,cy:v.view.cy,scale:v.view.scale},defaultView:!!v.defaultView,settings:s,selectedId:ids.has(v.selectedId)?v.selectedId:rows[0]?.id||null};}
+function migrate(v){if(!v||v.version!==1||!Array.isArray(v.rows))throw Error('舊資料無效');return sanitize({version:2,nextNumber:v.rows.length+1,rows:v.rows.map((r,i)=>{const d=r.draft||r.committed;return {...r,name:`函數 ${i+1}`,draft:{text:d.type==='parametric'?`x(t)=${d.expr}\ny(t)=${d.exprY}`:d.expr,tMin:d.tMin,tMax:d.tMax,domainMin:d.domainMin,domainMax:d.domainMax}};}),view:v.view,settings:v.settings,selectedId:v.selectedId,defaultView:false});}
+let storageFailureAnnounced=false;let loadMessage='',hasSaved=false;try{const saved=localStorage.getItem(STORE),old=!saved&&localStorage.getItem(LEGACY);if(saved){state=sanitize(JSON.parse(saved));hasSaved=true;}else if(old){state=migrate(JSON.parse(old));hasSaved=true;loadMessage='已轉換舊版輸入。依規格，請按「繪製」顯示曲線。';}}catch(e){loadMessage='無法讀取本機資料，已開啟空白工作區。當前操作仍可使用。';}
+let compiled=new Map(),undoStack=[],redoStack=[],batchJob=null,viewJob=null,localJobs=new Map(),pending=new Set(),viewEpoch=0,preview=false,viewTimer,saveTimer,toastTimer,wheelTimer,wheelBefore=null,selectedPoint=null;
+const engine=new PlotEngine($('plot')),rowBy=id=>state.rows.find(r=>r.id===id),dirty=r=>!r.committed||JSON.stringify(r.draft)!==JSON.stringify(r.committed);
+function toast(msg){$('toast').textContent=msg;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').textContent='',4500);}
+function saveSoon(){clearTimeout(saveTimer);$('saveState').textContent='儲存中…';saveTimer=setTimeout(saveNow,300);}
+function saveNow(){clearTimeout(saveTimer);try{const data={...state,rows:state.rows.map(({committed,error,note,...r})=>r)};localStorage.setItem(STORE,JSON.stringify(data));storageFailureAnnounced=false;$('saveState').innerHTML='<i class="save-dot"></i> 已儲存於此瀏覽器';}catch(e){$('saveState').textContent='保存失敗；目前仍可使用，重載可能遺失輸入';if(!storageFailureAnnounced){storageFailureAnnounced=true;toast('無法保存至此瀏覽器；目前仍可使用，重載後可能無法恢復輸入。');}}}
+const dark=()=>state.settings.theme==='dark'||state.settings.theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches;
+function applyTheme(){document.documentElement.dataset.theme=dark()?'dark':'light';}
+function request(rows=state.rows,map=compiled){const count=rows.filter(r=>r.visible&&map.has(r.id)).length;return {rows:rows.map(r=>({...r,width:state.settings.lineWidth,type:map.get(r.id)?.type})),compiled:map,view:{...state.view},settings:{...state.settings,dark:dark(),resourceFactor:Math.max(.06,Math.min(1,(navigator.hardwareConcurrency||4)/4/Math.sqrt(Math.max(1,count/6))))},selectedId:state.selectedId};}
+function syncSize(){const w=$('plotHolder').clientWidth,h=$('plotHolder').clientHeight;if(w>0&&h>0&&(engine.width!==w||engine.height!==h||engine.dpr!==Math.min(3,devicePixelRatio||1)))engine.resize(w,h);}
+function clearPoint(){selectedPoint=null;$('coordinate').textContent='';}
+function displayRequest(){const q=request();q.rows=q.rows.map(r=>localJobs.has(r.id)?{...r,visible:false}:r);return q;}
+function paint(){syncSize();engine.paintOnly(displayRequest());if(selectedPoint)engine.overlay(selectedPoint);$('scaleText').textContent=`1 單位 = ${Number(state.view.scale.toPrecision(4))} px`;}
+function setStatus(text){$('statusText').textContent=text;}
+function snapShot(){return {state:clone(state),compiled:new Map(compiled),geometry:engine.captureGeometry()};}
+function trimHistory(){if(undoStack.length>100)undoStack.shift();const seen=new Set();let bytes=0;const count=()=>{seen.clear();bytes=0;for(const item of undoStack)for(const x of item.snap.geometry.values())if(!seen.has(x.geometry)){seen.add(x.geometry);bytes+=(x.geometry?.segments?.length||0)*8;}};count();while(bytes>32*1024*1024&&undoStack.length>2){undoStack.shift();count();}}
+function invalidateRedo(){if(redoStack.length){redoStack=[];updateHistory();}}
+function record(before,label){if(JSON.stringify(before.state)===JSON.stringify(state))return;undoStack.push({snap:before,label});trimHistory();redoStack=[];updateHistory();}
+function updateHistory(){$('undoBtn').disabled=!undoStack.length;$('redoBtn').disabled=!redoStack.length;$('undoBtn').title=undoStack.length?'復原：'+undoStack.at(-1).label:'沒有可復原的操作';$('redoBtn').title=redoStack.length?'重做：'+redoStack.at(-1).label:'沒有可重做的操作';}
+function abortView(){clearTimeout(viewTimer);if(viewJob)viewJob.controller.abort();viewJob=null;viewEpoch++;}
+function abortLocals(){for(const [id,job]of localJobs){job.controller.abort();pending.delete(id);}localJobs.clear();}
+function batchUI(on){$('cancelBtn').hidden=!on;$('batchProgress').hidden=!on;$('drawBtn').disabled=on;$('drawBtn').textContent=on?'繪製中…':'繪製全部函數';}
+function cancelDraw(message=true){if(!batchJob)return;batchJob.controller.abort();for(const id of batchJob.ids)pending.delete(id);batchJob=null;batchUI(false);renderStatuses();renderLegend();paint();if(message){setStatus('繪製已取消，保留上次完整圖表');toast('本批結果已捨棄；原圖與草稿保留。');}}
+function halt(){cancelDraw(false);abortView();abortLocals();pending.clear();preview=false;clearPoint();}
+function applySnapshot(s){halt();state=clone(s.state);compiled=new Map(s.compiled);engine.restoreGeometry(s.geometry);applyTheme();refresh(false);setStatus('已恢復既有曲線資料');for(const r of state.rows)if(r.visible&&compiled.has(r.id)&&!s.geometry.has(r.id))reveal(r.id);}
+function finishWheel(){if(!wheelBefore)return;clearTimeout(wheelTimer);record(wheelBefore,'縮放視角');wheelBefore=null;saveSoon();scheduleView();}
+function undo(){finishWheel();if(!undoStack.length)return;const i=undoStack.pop();redoStack.push({snap:snapShot(),label:i.label});applySnapshot(i.snap);toast('已復原：'+i.label);}
+function redo(){finishWheel();if(!redoStack.length)return;const i=redoStack.pop();undoStack.push({snap:snapShot(),label:i.label});applySnapshot(i.snap);toast('已重做：'+i.label);}
+function transaction(fn,label){finishWheel();const before=snapShot();fn();clearPoint();record(before,label);refresh(false);}
+function refresh(sample=false){renderList();renderLegend();updateHistory();paint();saveSoon();if(sample)scheduleView();}
+function inferred(d){if(/\b[xy]\s*\(\s*t\s*\)\s*=/.test(d.text)||/\bt\b/.test(d.text)&&d.text.includes('\n'))return '參數式';if(d.text.includes('=')&&!/^\s*y\s*=/.test(d.text))return '隱函數';return '一般函數';}
+function statusHTML(r){return `${dirty(r)?'<span class="dirty-state">尚未更新</span>':'<span>已提交</span>'}${pending.has(r.id)?'<span>計算中</span>':!compiled.has(r.id)?'<span>尚未繪製</span>':''}${r.error?'<span class="error-state">錯誤</span>':''}`;}
+function rowNote(r){return !pending.has(r.id)&&r.visible&&compiled.has(r.id)&&!(engine.lastGeometry.get(r.id)?.geometry.segments.length)?'目前沒有可見曲線':r.note||'';}
+function renderList(){const active=document.activeElement,activeId=active?.closest('.function-card')?.dataset.id,activeField=active?.dataset.field,selection=active?.selectionStart!==undefined?[active.selectionStart,active.selectionEnd]:null,open=new Set([...$('functionList').querySelectorAll('.submitted-details[open]')].map(x=>x.closest('.function-card').dataset.id));$('rowCount').textContent=state.rows.length;
+$('functionList').innerHTML=state.rows.length?state.rows.map((r,i)=>`<article class="function-card${r.id===state.selectedId?' selected':''}${!r.visible?' hidden-curve':''}" data-id="${r.id}" style="--row-color:${r.color}"><div class="row-head"><span class="fn-name" draggable="true" title="拖曳 ${esc(r.name)} 排序" aria-hidden="true">⠿</span><input class="name-input" data-field="name" aria-label="函數名稱" maxlength="100" value="${esc(r.name)}"><input class="color-input" data-field="color" type="color" aria-label="${esc(r.name)} 的顏色" value="${r.color}"><button class="icon-button quiet" data-action="visibility" aria-label="${r.visible?'隱藏':'顯示'} ${esc(r.name)}" title="${r.visible?'隱藏':'顯示'}曲線">${icon(r.visible?'eye':'eyeOff')}</button><button class="small quiet danger" data-action="delete" aria-label="刪除 ${esc(r.name)}">刪除</button></div><label class="sr-only" for="expr-${r.id}">${esc(r.name)} 的公式，參數式分兩行</label><textarea id="expr-${r.id}" class="math-input" data-field="text" aria-label="${esc(r.name)} 的公式" maxlength="2048" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="例如 y=x²；參數式請將 x(t)、y(t) 分兩行">${esc(r.draft.text)}</textarea><details class="range-details"><summary class="row-note">${esc(inferred(r.draft))} · 參數與定義域</summary><div class="range-fields"><span>t</span><input data-field="tMin" aria-label="${esc(r.name)} 的 t 下限" maxlength="2048" value="${esc(r.draft.tMin)}"><span>到</span><input data-field="tMax" aria-label="${esc(r.name)} 的 t 上限" maxlength="2048" value="${esc(r.draft.tMax)}"></div><div class="range-fields"><span>x</span><input data-field="domainMin" aria-label="${esc(r.name)} 的 x 定義域下限" maxlength="2048" placeholder="−∞" value="${esc(r.draft.domainMin)}"><span>到</span><input data-field="domainMax" aria-label="${esc(r.name)} 的 x 定義域上限" maxlength="2048" placeholder="∞" value="${esc(r.draft.domainMax)}"></div><p class="row-note">t 範圍僅用於參數式；x 定義域僅用於一般函數。修改後須按繪製。</p></details><p class="row-error" role="alert"${r.error?'':' hidden'}>${esc(r.error)}</p><div class="row-status">${statusHTML(r)}</div><p class="row-note result-note">${esc(rowNote(r))}</p>${r.committed&&compiled.has(r.id)?`<details class="submitted-details"${open.has(r.id)?' open':''}><summary>目前已繪製公式</summary><pre>${esc(r.committed.text)}${compiled.get(r.id).type==='parametric'?'\nt：'+esc(r.committed.tMin)+' 到 '+esc(r.committed.tMax):''}</pre></details>`:''}<div class="row-actions"><button class="small quiet" data-action="up" aria-label="上移 ${esc(r.name)}"${i?'':' disabled'}>${icon('up')}上移</button><button class="small quiet" data-action="down" aria-label="下移 ${esc(r.name)}"${i<state.rows.length-1?'':' disabled'}>${icon('down')}下移</button>${r.committed?'<button class="small quiet" data-action="revert">還原草稿</button>':''}<span class="type-badge" style="margin-left:auto">自動辨識</span></div></article>`).join(''):'<div class="empty-state">從一個公式開始。<br>新增空白項目、選擇範例，<br>或批次貼上多行公式。<br><br>按「繪製」後，曲線才會出現。</div>';
+if(activeId&&activeField){const input=$('functionList').querySelector(`[data-id="${activeId}"] [data-field="${activeField}"]`);if(input){input.focus({preventScroll:true});if(selection&&input.setSelectionRange)try{input.setSelectionRange(...selection);}catch(_){}}}}
+function renderStatuses(){for(const card of $('functionList').querySelectorAll('.function-card')){const r=rowBy(card.dataset.id);if(!r)continue;card.querySelector('.row-status').innerHTML=statusHTML(r);const e=card.querySelector('.row-error');e.textContent=r.error;e.hidden=!r.error;card.querySelector('.result-note').textContent=rowNote(r);}}
+function renderLegend(){$('legend').innerHTML=state.rows.map(r=>`<button data-id="${r.id}" class="${r.visible?'':'invisible'}" aria-label="${r.visible?'隱藏':'顯示'} ${esc(r.name)}" aria-pressed="${r.visible}" title="${esc(r.name)}：${r.visible?'顯示':'隱藏'}"><span class="line" style="background:${r.color}"></span><span>${esc(r.name)}</span><span class="legend-state">${pending.has(r.id)?'計算中':r.visible?'顯示':'隱藏'}</span></button>`).join('');}
+function select(id){state.selectedId=id;for(const c of $('functionList').children)c.classList.toggle('selected',c.dataset.id===id);saveSoon();}
+function rowFrom(e){return rowBy(e.target.closest('.function-card')?.dataset.id);}
+function parse(d){if(!d.text.trim())throw Error('請輸入公式');if(d.text.length>2048)throw Error('公式超過 2048 字元，請縮短後繪製；原文已保留。');return MathEngine.parseInput(d.text,d,{});}
+function reservations(exclude){const map=new Map(),put=(key,id)=>{if(!map.has(key))map.set(key,new Set());map.get(key).add(id);};for(const r of state.rows){if(r.id===exclude)continue;const c=compiled.get(r.id);if(c)put(c.normalizedKey,r.id);try{put(parse(r.draft).normalizedKey,r.id);}catch(_){}}return map;}
+function add(text=''){const r=makeRow(text);transaction(()=>{state.rows.push(r);state.selectedId=r.id;},'新增函數');requestAnimationFrame(()=>{$('functionList').querySelector(`[data-id="${r.id}"]`)?.scrollIntoView({block:'nearest'});$('functionList').querySelector(`[data-id="${r.id}"] [data-field=text]`)?.focus();});return r.id;}
+function pairLines(text){const lines=text.split(/\r?\n/).filter(s=>s.trim()),out=[],component=s=>{const m=s.match(/^\s*([xy])\s*(?:\(\s*t\s*\))?\s*=/i);return m?{axis:m[1].toLowerCase(),param:/\(\s*t\s*\)/.test(s)||/\bt\b/.test(s)}:null;};for(let i=0;i<lines.length;i++){const a=component(lines[i]),b=component(lines[i+1]||'');if(a&&b&&a.axis!==b.axis&&(a.param||b.param))out.push(lines[i++]+'\n'+lines[i]);else out.push(lines[i]);}return out;}
+function batchInsert(text){if(text.length>1000000){toast('批次文字超過 100 萬字元，請分段加入；原文保留於輸入區。');return {rejectedOversize:true,added:0,errors:1,duplicates:0};}const entries=pairLines(text),reserved=reservations(),before=snapShot();let added=0,errors=0,duplicates=0;for(const text of entries){const r=makeRow(text);if(text.length>2048){r.error='公式超過 2048 字元，原文完整保留，請縮短後繪製。';errors++;}else try{const c=parse(r.draft);if(reserved.has(c.normalizedKey)){duplicates++;state.nextNumber--;continue;}reserved.set(c.normalizedKey,new Set([r.id]));}catch(e){r.error=e.message;errors++;}state.rows.push(r);added++;state.selectedId=r.id;}record(before,'批次加入草稿');refresh(false);toast(`加入 ${added} 項草稿；拒絕 ${duplicates} 項重複${errors?'；'+errors+' 項需修正':''}。尚未繪製。`);return {added,errors,duplicates};}
+function move(id,delta){const i=state.rows.findIndex(r=>r.id===id),n=i+delta;if(i<0||n<0||n>=state.rows.length)return;transaction(()=>{const [r]=state.rows.splice(i,1);state.rows.splice(n,0,r);},'調整函數順序');}
+function progress(done,total){const percent=total?Math.round(done/total*100):100;$('progressBar').value=percent;$('progressText').textContent=`${percent}% (${done}/${total})`;}
+async function drawAll(){finishWheel();cancelDraw(false);abortView();abortLocals();pending.clear();preview=false;clearPoint();const controller=new AbortController(),job={controller,ids:new Set(state.rows.map(r=>r.id))};batchJob=job;batchUI(true);progress(0,state.rows.length);setStatus('驗證公式並取樣…');const candidates=state.rows.map(r=>({...r,draft:clone(r.draft)})),map=new Map(compiled),accepted=new Map(),reserved=new Map();for(const [id,c]of compiled)reserved.set(c.normalizedKey,id);let processed=0,failed=0;
+try{await tick();for(let i=0;i<candidates.length;i++){if(controller.signal.aborted||batchJob!==job)return false;const r=candidates[i],live=rowBy(r.id);if(!live){processed++;continue;}try{const c=parse(r.draft),owner=reserved.get(c.normalizedKey);if(owner&&owner!==r.id)throw Error('公式重複：與「'+(rowBy(owner)?.name||'其他函數')+'」標準化後相同。');reserved.set(c.normalizedKey,r.id);accepted.set(r.id,{compiled:c,draft:r.draft});map.set(r.id,c);if(JSON.stringify(live.draft)===JSON.stringify(r.draft))live.error='';if(r.visible)pending.add(r.id);else processed++;}catch(e){if(JSON.stringify(live.draft)===JSON.stringify(r.draft))live.error=e.message;failed++;processed++;}progress(processed,candidates.length);if(i%8===0){renderStatuses();renderLegend();await tick();}}
+renderStatuses();renderLegend();const sampleRows=candidates.filter(r=>r.visible&&accepted.has(r.id)),baseProcessed=processed;let staged=sampleRows.length?await engine.prepare({...request(sampleRows,map),signal:controller.signal,onProgress:n=>{if(batchJob===job)progress(Math.min(candidates.length,baseProcessed+n),candidates.length);}}):new Map();
+if(controller.signal.aborted||batchJob!==job||staged.cancelled)return false;if(staged.error)throw Error(staged.error);
+while(true){const missing=state.rows.filter(r=>r.visible&&accepted.has(r.id)&&!staged.has(r.id));if(!missing.length)break;for(const r of missing)pending.add(r.id);renderStatuses();renderLegend();const more=await engine.prepare({...request(missing,map),signal:controller.signal});if(controller.signal.aborted||batchJob!==job||more.cancelled)return false;if(more.error)throw Error(more.error);for(const [id,e]of more)staged.set(id,e);}
+const before=snapShot(),currentIds=new Set(state.rows.map(r=>r.id)),merged=engine.captureGeometry();for(const id of map.keys())if(!currentIds.has(id))map.delete(id);for(const [id,item]of accepted){const live=rowBy(id);if(live){live.committed=clone(item.draft);live.note='';merged.delete(id);if(staged.has(id))merged.set(id,staged.get(id));}}for(const id of merged.keys())if(!currentIds.has(id))merged.delete(id);
+compiled=map;for(const id of engine.cache.keys())if(!currentIds.has(id))engine.clearCache(id);batchJob=null;pending.clear();engine.publish(merged,{...request(),replace:true});batchUI(false);progress(candidates.length,candidates.length);record(before,'繪製公式');refresh(false);setStatus(`${accepted.size} 項通過驗證${failed?' · '+failed+' 項錯誤保留舊圖':''}${staged.stats?.truncated?' · 部分取樣達上限':''}`);for(const r of state.rows)if(r.visible&&compiled.has(r.id)&&!merged.has(r.id))reveal(r.id);for(const item of staged.stats?.notes||[]){const r=rowBy(item.id);if(r)r.note=item.note;}renderStatuses();return true;
+}catch(e){if(!controller.signal.aborted){toast('繪製失敗：'+e.message);setStatus('繪製失敗，保留上次完整圖表');}return false;}finally{if(batchJob===job){batchJob=null;pending.clear();batchUI(false);renderStatuses();renderLegend();paint();}}}
+function scheduleView(delay=180){clearTimeout(viewTimer);viewTimer=setTimeout(()=>resampleView(),delay);}
+async function resampleView(){abortView();abortLocals();if(!compiled.size){preview=false;paint();return;}const controller=new AbortController(),epoch=viewEpoch,job={controller,epoch};viewJob=job;preview=true;clearPoint();setStatus('精確重新取樣中，暫停吸附…');try{const staged=await engine.prepare({...request(),signal:controller.signal});if(controller.signal.aborted||viewJob!==job||epoch!==viewEpoch||staged.cancelled)return;if(staged.error)throw Error(staged.error);engine.publish(staged,{...request(),replace:true});for(const r of state.rows)r.note='';for(const item of staged.stats?.notes||[]){const r=rowBy(item.id);if(r)r.note=item.note;}preview=false;viewJob=null;renderStatuses();renderLegend();paint();setStatus(staged.stats?.truncated?'取樣完成 · 已達部分資源上限':'取樣完成，可吸附曲線');}catch(e){if(!controller.signal.aborted)setStatus('取樣失敗，仍保留舊資料預覽');}finally{if(viewJob===job)viewJob=null;}}
+async function reveal(id){const r=rowBy(id),c=compiled.get(id);if(!r||!r.visible||!c)return;localJobs.get(id)?.controller.abort();const controller=new AbortController(),epoch=viewEpoch,job={controller};localJobs.set(id,job);pending.add(id);// Keep previous geometry references for history; displayRequest suppresses pending rows.
+renderStatuses();renderLegend();paint();try{const staged=await engine.prepare({...request([r],new Map([[id,c]])),signal:controller.signal,onlyIds:[id]});if(controller.signal.aborted||localJobs.get(id)!==job||!rowBy(id)?.visible||compiled.get(id)!==c||epoch!==viewEpoch||staged.cancelled)return;if(staged.error)throw Error(staged.error);engine.publish(staged,displayRequest());r.note=staged.stats?.notes?.find(n=>n.id===id)?.note||'';}catch(e){if(!controller.signal.aborted)r.note='此曲線取樣失敗：'+e.message;}finally{if(localJobs.get(id)===job){localJobs.delete(id);pending.delete(id);renderStatuses();renderLegend();paint();}}}
+function visibility(id){const r=rowBy(id);if(!r)return;const wasPreview=preview||!!viewJob;if(wasPreview){abortView();preview=true;}transaction(()=>{r.visible=!r.visible;if(!r.visible){localJobs.get(id)?.controller.abort();localJobs.delete(id);pending.delete(id);}},r.visible?'隱藏曲線':'顯示曲線');if(!batchJob){if(wasPreview)scheduleView();else if(r.visible)reveal(id);}}
+const nameStarts=new Map();$('functionList').addEventListener('focusin',e=>{const r=rowFrom(e);if(!r)return;select(r.id);if(e.target.dataset.field==='name')nameStarts.set(r.id,snapShot());});$('functionList').addEventListener('focusout',e=>{const r=rowFrom(e);if(r&&e.target.dataset.field==='name'&&nameStarts.has(r.id)){if(!r.name.trim()){r.name='未命名函數';e.target.value=r.name;}record(nameStarts.get(r.id),'修改函數名稱');nameStarts.delete(r.id);renderLegend();saveSoon();}});
+$('functionList').addEventListener('input',e=>{const r=rowFrom(e),f=e.target.dataset.field;if(!r||!f||f==='color')return;if(f==='name'){invalidateRedo();r.name=e.target.value.slice(0,100);renderLegend();if(selectedPoint?.id===r.id)showCoordinates(selectedPoint);saveSoon();return;}invalidateRedo();r.draft[f]=e.target.value;r.error=f==='text'&&!r.draft.text.trim()?'請輸入公式':e.target.value.length>2048?'公式超過 2048 字元，原文已保留。':'';renderStatuses();saveSoon();});
+$('functionList').addEventListener('change',e=>{const r=rowFrom(e);if(r&&e.target.dataset.field==='color')transaction(()=>{r.color=e.target.value;},'修改函數顏色');});
+$('functionList').addEventListener('click',e=>{const r=rowFrom(e);if(!r)return;select(r.id);const a=e.target.closest('[data-action]')?.dataset.action;if(a==='up')move(r.id,-1);if(a==='down')move(r.id,1);if(a==='visibility')visibility(r.id);if(a==='revert'&&r.committed){invalidateRedo();r.draft=clone(r.committed);r.error='';renderList();saveSoon();}if(a==='delete')transaction(()=>{state.rows=state.rows.filter(x=>x.id!==r.id);compiled.delete(r.id);engine.clearCache(r.id);localJobs.get(r.id)?.controller.abort();localJobs.delete(r.id);pending.delete(r.id);if(state.selectedId===r.id)state.selectedId=state.rows[0]?.id||null;},'刪除函數');});
+$('functionList').addEventListener('keydown',e=>{const r=rowFrom(e);if(r&&e.key==='Escape'&&r.committed&&e.target.matches('textarea,input:not([data-field=name])')){e.preventDefault();invalidateRedo();r.draft=clone(r.committed);r.error='';renderList();saveSoon();}});
+$('functionList').addEventListener('paste',e=>{if(!e.target.matches('textarea[data-field=text]'))return;const text=e.clipboardData?.getData('text/plain')||'';if(pairLines(text).length>1&&!e.target.value.trim()){e.preventDefault();const target=rowFrom(e),result=batchInsert(text);if(result.added&&target&&!target.committed){state.rows=state.rows.filter(r=>r.id!==target.id);refresh(false);}}});
+let dragId=null;$('functionList').addEventListener('dragstart',e=>{if(!e.target.matches('.fn-name')){e.preventDefault();return;}dragId=rowFrom(e)?.id;e.dataTransfer.setData('text/plain',dragId);});$('functionList').addEventListener('dragover',e=>{if(dragId&&e.target.closest('.function-card'))e.preventDefault();});$('functionList').addEventListener('drop',e=>{e.preventDefault();const r=rowFrom(e),from=state.rows.findIndex(r=>r.id===dragId),to=state.rows.indexOf(r);if(from>=0&&to>=0&&from!==to)transaction(()=>{const [item]=state.rows.splice(from,1);state.rows.splice(to,0,item);},'拖曳排序');dragId=null;});$('functionList').addEventListener('dragend',()=>dragId=null);$('legend').addEventListener('click',e=>{const id=e.target.closest('[data-id]')?.dataset.id;if(id)visibility(id);});
+$('quickTools').innerHTML=['π','²','³','^','sin()','cos()','tan()','log()','log(,)','ln()','sqrt()','exp()','(',')'].map(x=>`<button data-insert="${esc(x)}" title="插入 ${esc(x)}" aria-label="插入 ${esc(x)}">${esc(x)}</button>`).join('');$('quickTools').addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')e.preventDefault();});$('quickTools').onclick=e=>{const text=e.target.closest('[data-insert]')?.dataset.insert;if(!text)return;if(!rowBy(state.selectedId))add();const el=$('functionList').querySelector(`[data-id="${state.selectedId}"] [data-field=text]`);if(!el)return;el.focus();const start=el.selectionStart;el.setRangeText(text,start,el.selectionEnd,'end');if(text.includes('(')){const p=start+text.indexOf('(')+1;el.setSelectionRange(p,p);}el.dispatchEvent(new Event('input',{bubbles:true}));};
+function defaultView(){return {cx:0,cy:0,scale:Math.max(1e-6,Math.min($('plotHolder').clientWidth,$('plotHolder').clientHeight)/20)};}
+function setView(v){if(!validView(v)){toast('已達可安全顯示的座標或縮放界限。');return false;}cancelDraw(false);abortView();abortLocals();pending.clear();state.view={...v};state.defaultView=false;preview=compiled.size>0;clearPoint();paint();if(preview)setStatus('快速預覽中，暫停吸附');return true;}
+function zoom(factor,x=engine.width/2,y=engine.height/2){const v=state.view,scale=Math.max(1e-6,Math.min(1e8,v.scale*factor));if(scale===v.scale){toast('已達縮放界限。');return;}const wx=v.cx+(x-engine.width/2)/v.scale,wy=v.cy-(y-engine.height/2)/v.scale;setView({cx:wx-(x-engine.width/2)/scale,cy:wy+(y-engine.height/2)/scale,scale});}
+function viewAction(fn,label){finishWheel();const before=snapShot();fn();record(before,label);saveSoon();scheduleView();}
+$('plot').addEventListener('wheel',e=>{e.preventDefault();if(!wheelBefore)wheelBefore=snapShot();zoom(Math.exp(-Math.max(-150,Math.min(150,e.deltaY))*.002),e.offsetX,e.offsetY);clearTimeout(wheelTimer);wheelTimer=setTimeout(finishWheel,180);},{passive:false});$('zoomIn').onclick=()=>viewAction(()=>zoom(1.35),'放大視角');$('zoomOut').onclick=()=>viewAction(()=>zoom(1/1.35),'縮小視角');$('homeView').onclick=()=>viewAction(()=>{setView(defaultView());state.defaultView=true;},'重設視角');
+function number(n){const dec=Math.min(10,Math.max(0,Math.ceil(Math.log10(state.view.scale*2))));if(!Number.isFinite(n))return '—';if(Math.abs(n)<.5*10**-dec)return '0';if(Math.abs(n)>=1e6||Math.abs(n)<10**-dec)return n.toExponential(4);return n.toFixed(dec).replace(/(\.\d*?)0+$/,'$1').replace(/\.$/,'');}
+function showCoordinates(p){$('coordinate').textContent=`${p.id?(rowBy(p.id)?.name||'函數')+' · ':''}X ${number(p.x)}  Y ${number(p.y)}`;}
+function inspect(x,y,pin=false){if(preview||viewJob||batchJob){clearPoint();engine.overlay(null);return;}let p=state.settings.snap?engine.hitTest(x,y,14):null;if(p&&pending.has(p.id))p=null;if(p){if(pin)select(p.id);}else if(state.settings.crosshair)p={...engine.toWorld(x,y),screenX:x,screenY:y};else{clearPoint();engine.overlay(null);return;}showCoordinates(p);selectedPoint=state.settings.crosshair?p:null;engine.overlay(selectedPoint);}
+const pointers=new Map();let gesture=null;const location=e=>{const r=$('plot').getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};};function beginGesture(){gesture={before:gesture?.before||snapShot(),base:{...state.view},points:[...pointers.values()].map(p=>({...p})),moved:gesture?.moved||false};}
+$('plot').addEventListener('pointerdown',e=>{if(e.button!==0)return;finishWheel();$('plot').focus({preventScroll:true});$('plot').setPointerCapture(e.pointerId);pointers.set(e.pointerId,location(e));beginGesture();});$('plot').addEventListener('pointermove',e=>{const p=location(e);if(!pointers.has(e.pointerId)){if(e.pointerType==='mouse')inspect(p.x,p.y);return;}pointers.set(e.pointerId,p);if(!gesture)return;const ps=[...pointers.values()],o=gesture.points,v=gesture.base;if(ps.length===1&&o.length===1){const dx=ps[0].x-o[0].x,dy=ps[0].y-o[0].y;if(Math.hypot(dx,dy)>3)gesture.moved=true;if(gesture.moved)setView({cx:v.cx-dx/v.scale,cy:v.cy+dy/v.scale,scale:v.scale});}else if(ps.length>=2&&o.length>=2){gesture.moved=true;const d0=Math.hypot(o[0].x-o[1].x,o[0].y-o[1].y),d=Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y);if(d0<5)return;const scale=Math.max(1e-6,Math.min(1e8,v.scale*d/d0)),ox=(o[0].x+o[1].x)/2,oy=(o[0].y+o[1].y)/2,nx=(ps[0].x+ps[1].x)/2,ny=(ps[0].y+ps[1].y)/2;setView({cx:v.cx+(ox-engine.width/2)/v.scale-(nx-engine.width/2)/scale,cy:v.cy-(oy-engine.height/2)/v.scale+(ny-engine.height/2)/scale,scale});}});
+function endPointer(e){if(!pointers.has(e.pointerId))return;const old=gesture,p=pointers.get(e.pointerId);pointers.delete(e.pointerId);if(pointers.size){beginGesture();return;}gesture=null;if(old?.moved){record(old.before,'平移／縮放視角');saveSoon();scheduleView();}else if(e.type!=='pointercancel')inspect(p.x,p.y,true);}$('plot').addEventListener('pointerup',endPointer);$('plot').addEventListener('pointercancel',endPointer);$('plot').addEventListener('pointerleave',e=>{if(e.pointerType!=='touch'&&!pointers.size){clearPoint();engine.overlay(null);}});$('plot').addEventListener('dblclick',e=>viewAction(()=>zoom(1.7,e.offsetX,e.offsetY),'放大視角'));
+$('plot').addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;const v=state.view;let fn;if(e.key==='ArrowLeft')fn=()=>setView({...v,cx:v.cx-50/v.scale});if(e.key==='ArrowRight')fn=()=>setView({...v,cx:v.cx+50/v.scale});if(e.key==='ArrowUp')fn=()=>setView({...v,cy:v.cy+50/v.scale});if(e.key==='ArrowDown')fn=()=>setView({...v,cy:v.cy-50/v.scale});if(['+','='].includes(e.key))fn=()=>zoom(1.25);if(e.key==='-')fn=()=>zoom(.8);if(e.key==='Home')fn=()=>{setView(defaultView());state.defaultView=true;};if(fn){e.preventDefault();viewAction(fn,'鍵盤調整視角');}});
+function openDialog(id){$(id).showModal();}document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).close());document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close();}}));$('helpBtn').onclick=()=>openDialog('helpDialog');$('batchBtn').onclick=()=>{$('batchMessage').textContent='';openDialog('batchDialog');};$('batchInsert').onclick=()=>{const result=batchInsert($('batchInput').value);if(result.rejectedOversize)return;$('batchInput').value='';$('batchDialog').close();};
+const samples=[['拋物線','y=x²'],['正弦','sin(x)'],['圓形','x²+y²=25'],['愛心','(x²+y²-1)^3-x²*y^3=0'],['參數橢圓','x(t)=3*cos(t)\ny(t)=2*sin(t)']];$('sampleGrid').innerHTML=samples.map(([n,t],i)=>`<button data-sample="${i}">${n}<small>${esc(t)}</small></button>`).join('');$('sampleGrid').onclick=e=>{const b=e.target.closest('[data-sample]');if(b){batchInsert(samples[+b.dataset.sample][1]);$('examplesDialog').close();}};$('examplesBtn').onclick=()=>openDialog('examplesDialog');
+$('settingsBtn').onclick=()=>{const f=$('settingsForm');for(const k of ['theme','quality'])f.elements[k].value=state.settings[k];for(const k of ['grid','axes','labels','crosshair','snap'])f.elements[k].checked=state.settings[k];f.elements.lineWidth.value=state.settings.lineWidth;$('lineWidthValue').textContent=state.settings.lineWidth;openDialog('settingsDialog');};$('settingsForm').onsubmit=e=>e.preventDefault();let widthBefore=null;$('lineWidthInput').addEventListener('pointerdown',()=>widthBefore=snapShot());$('lineWidthInput').oninput=e=>{if(!widthBefore)widthBefore=snapShot();state.settings.lineWidth=+e.target.value;$('lineWidthValue').textContent=e.target.value;clearPoint();paint();saveSoon();};$('lineWidthInput').onchange=()=>{if(widthBefore)record(widthBefore,'修改全域線寬');widthBefore=null;};$('settingsForm').addEventListener('change',e=>{const key=e.target.name;if(key==='lineWidth'||!Object.hasOwn(defaults(),key))return;transaction(()=>{state.settings[key]=e.target.type==='checkbox'?e.target.checked:e.target.value;applyTheme();},'修改畫布設定');if(key==='quality'){cancelDraw(false);scheduleView(0);}});
+$('viewBtn').onclick=()=>{const f=$('viewForm'),v=state.view;for(const [k,n]of Object.entries({xmin:v.cx-engine.width/2/v.scale,xmax:v.cx+engine.width/2/v.scale,ymin:v.cy-engine.height/2/v.scale,ymax:v.cy+engine.height/2/v.scale}))f.elements[k].value=Number(n.toPrecision(10));$('viewError').textContent='';openDialog('viewDialog');};$('rangeMode').onchange=e=>{const m=e.target.value;for(const k of ['xmin','xmax','ymin','ymax'])$('viewForm').elements[k].disabled=m!=='both'&&!k.startsWith(m);};
+$('viewForm').onsubmit=e=>{e.preventDefault();try{const f=e.target,m=f.elements.mode.value,num=k=>MathEngine.compileExpression(f.elements[k].value,[]).evaluate({}),xmin=m==='y'?null:num('xmin'),xmax=m==='y'?null:num('xmax'),ymin=m==='x'?null:num('ymin'),ymax=m==='x'?null:num('ymax');if(m!=='y'&&(!Number.isFinite(xmin)||!Number.isFinite(xmax)||xmin>=xmax)||m!=='x'&&(!Number.isFinite(ymin)||!Number.isFinite(ymax)||ymin>=ymax))throw Error('最小值必須小於最大值，且必須為有限數字。');const v={cx:m==='y'?state.view.cx:(xmin+xmax)/2,cy:m==='x'?state.view.cy:(ymin+ymax)/2,scale:m==='x'?engine.width/(xmax-xmin):m==='y'?engine.height/(ymax-ymin):Math.min(engine.width/(xmax-xmin),engine.height/(ymax-ymin))};if(!validView(v))throw Error('範圍超出安全界限：中心 ≤ 10¹²，比例須在 10⁻⁶ 到 10⁸ px／單位。');viewAction(()=>setView(v),'套用座標範圍');$('viewDialog').close();toast(m==='both'?'已完整容納指定範圍，並維持 X／Y 等比例。':'已保留指定軸邊界，另一軸依等比例調整。');}catch(err){$('viewError').textContent=err.message;}};
+$('togglePanel').onclick=()=>{$('workspace').classList.toggle('panel-hidden');$('togglePanel').textContent=$('workspace').classList.contains('panel-hidden')?'顯示清單':'收合清單';};$('drawBtn').onclick=drawAll;$('cancelBtn').onclick=()=>cancelDraw();$('addFunction').onclick=()=>add();$('undoBtn').onclick=undo;$('redoBtn').onclick=redo;
+document.addEventListener('keydown',e=>{const typing=e.target.matches('input,textarea,select')||e.target.isContentEditable;if((e.ctrlKey||e.metaKey)&&e.key==='Enter'&&!document.querySelector('dialog[open]')){e.preventDefault();drawAll();return;}if(typing||document.querySelector('dialog[open]'))return;if((e.ctrlKey||e.metaKey)&&!e.altKey){if(e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo();}if(e.key.toLowerCase()==='y'){e.preventDefault();redo();}}});window.addEventListener('pagehide',saveNow);document.addEventListener('visibilitychange',()=>{if(document.hidden)saveNow();});matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(state.settings.theme==='system'){applyTheme();paint();}});
+let resizeFrame;new ResizeObserver(()=>{cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>{if(state.defaultView)state.view=defaultView();syncSize();paint();if(compiled.size){cancelDraw(false);abortView();abortLocals();preview=true;scheduleView();}saveSoon();});}).observe($('plotHolder'));
+for(const [id,n]of [['undoBtn','undo'],['redoBtn','redo'],['homeView','home']])$(id).innerHTML=icon(n);$('helpBtn').insertAdjacentHTML('afterbegin',icon('help'));$('settingsBtn').insertAdjacentHTML('afterbegin',icon('settings'));applyTheme();syncSize();if(!hasSaved||state.defaultView)state.view=defaultView();refresh(false);if(loadMessage)toast(loadMessage);else if(hasSaved)setStatus('已恢復輸入及設定，請按「繪製」顯示曲線');
+window.GraphApp={getState:()=>clone(state),getCompiled:()=>compiled,getHistory:()=>({undo:undoStack.length,redo:redoStack.length}),getJobs:()=>({batch:!!batchJob,view:!!viewJob,preview,local:[...localJobs.keys()],pending:[...pending]}),engine,drawAll,cancelDraw,add,batchInsert,move,visibility,undo,redo,resampleView,storageKey:STORE};
+})();
+
+</script>
+</body></html>
